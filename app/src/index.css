@@ -16,3 +16,28 @@ button:disabled { opacity: .5; }
 .toile-signature { width: 100%; height: 200px; border: 2px dashed #8aa; border-radius: 8px; background: #fff; touch-action: none; }
 .ligne { display: flex; gap: 10px; margin-top: 8px; }
 .ligne > * { flex: 1; }
+.barre { display: flex; justify-content: space-between; align-items: center; background: #0b4f8a; color: #fff; padding: 8px 16px; font-weight: 700; }
+.barre button { background: transparent; color: #fff; border-color: #fff; }
+button.petit { min-height: 40px; padding: 6px 12px; font-size: .9rem; }
+.discret { color: #5b6670; font-size: .9rem; }
+.liste { list-style: none; padding: 0; }
+.liste li { margin: 8px 0; }
+.carte { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 4px; background: #fff; border-color: #cfd8e0; color: #1a1a1a; }
+.choix button.actif { background: #0b4f8a; color: #fff; }
+.choix button.nok.actif { background: #b00020; border-color: #b00020; }
+.choix button.ok.actif { background: #1b7a2f; border-color: #1b7a2f; }
+.pastille { align-self: flex-start; font-size: .8rem; padding: 2px 8px; border-radius: 10px; background: #e0e6ec; }
+.pastille.terminee { background: #d8f0dd; } .pastille.validee { background: #1b7a2f; color: #fff; } .pastille.renvoyee { background: #fde2e1; }
+.entete { display: flex; gap: 12px; align-items: center; }
+.onglets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; position: sticky; top: 0; background: #f4f6f8; padding: 8px 0; z-index: 2; }
+.onglets button { padding: 6px 2px; font-size: .8rem; min-height: 56px; }
+.onglets button.actif { background: #0b4f8a; color: #fff; }
+.point { background: #fff; border: 1px solid #dde3e8; border-radius: 10px; padding: 12px; margin: 10px 0; }
+.point.repondu { border-left: 6px solid #1b7a2f; }
+.consigne { color: #44505a; font-size: .9rem; margin: 6px 0; }
+fieldset { border: 0; padding: 0; margin: 0; }
+.bas { margin: 16px 0; }
+.qte { max-width: 80px; }
+.ajout-piece input { margin-top: 0; }
+.question { margin: 12px 0; font-weight: 600; }
+[hidden] { display: none !important; }

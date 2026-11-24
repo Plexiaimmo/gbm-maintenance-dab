@@ -12,6 +12,7 @@ export interface Site { id: string; banque_id: string; nom: string; ville: strin
 export interface Dab {
   id: string; code: string; site_id: string | null; marque: string | null; modele: string | null;
   numero_serie: string | null; ville: string | null; origine: 'reference' | 'nouveau_a_verifier'; cree_par?: string | null;
+  agence_saisie?: string | null;
   sync?: Sync;
 }
 export interface ChecklistItem {
