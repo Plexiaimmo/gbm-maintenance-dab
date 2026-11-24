@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { db } from './db';
+import { toutLire } from '../lib/pagination';
 
 const TABLES = [
   ['dab', 'dab'], ['sites', 'sites'], ['banques', 'banques'], ['checklist_items', 'checklist'],
@@ -10,9 +11,11 @@ const TABLES = [
 export async function chargerReferentiel(client: SupabaseClient): Promise<{ dab: number }> {
   const lus: Record<string, unknown[]> = {};
   for (const [distante] of TABLES) {
-    const { data, error } = await client.from(distante).select('*');
-    if (error) throw new Error(`Chargement de ${distante} impossible : ${error.message}`);
-    lus[distante] = data ?? [];
+    try {
+      lus[distante] = await toutLire((de, a) => client.from(distante).select('*').range(de, a));
+    } catch (e) {
+      throw new Error(`Chargement de ${distante} impossible : ${(e as Error).message}`);
+    }
   }
   await db.transaction('rw', TABLES.map(([, locale]) => db.table(locale)), async () => {
     for (const [distante, locale] of TABLES) {

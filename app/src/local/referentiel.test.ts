@@ -7,7 +7,7 @@ const tables: Record<string, unknown[]> = {
   sites: [{ id: 's1' }], banques: [{ id: 'b1' }], checklist_items: [{ id: 'CHK-P101', ordre: 10 }],
   articles: [{ pn: 'X' }], parametres: [{ cle: 'duree_min_minutes', valeur: '60' }],
 };
-const client = { from: (t: string) => ({ select: async () => ({ data: tables[t], error: null }) }) };
+const client = { from: (t: string) => ({ select: () => ({ range: async (de: number, a: number) => ({ data: tables[t].slice(de, a + 1), error: null }) }) }) };
 
 beforeEach(async () => { await db.delete(); await db.open(); });
 
@@ -23,7 +23,14 @@ test('charge le référentiel sans toucher aux saisies ni dupliquer', async () =
 
 test('une erreur serveur ne vide pas le référentiel local', async () => {
   await chargerReferentiel(client as never);
-  const enPanne = { from: () => ({ select: async () => ({ data: null, error: { message: 'réseau' } }) }) };
+  const enPanne = { from: () => ({ select: () => ({ range: async () => ({ data: null, error: { message: 'réseau' } }) }) }) };
   await expect(chargerReferentiel(enPanne as never)).rejects.toThrow('réseau');
   expect(await db.dab.count()).toBe(3);
+});
+
+test('plus de 1000 articles : tous chargés', async () => {
+  const beaucoup = { ...tables, articles: Array.from({ length: 1500 }, (_, i) => ({ pn: `P${i}` })) };
+  const gros = { from: (t: string) => ({ select: () => ({ range: async (de: number, a: number) => ({ data: (beaucoup as Record<string, unknown[]>)[t].slice(de, a + 1), error: null }) }) }) };
+  await chargerReferentiel(gros as never);
+  expect(await db.articles.count()).toBe(1500);
 });

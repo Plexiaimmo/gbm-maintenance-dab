@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { toutLire } from '../lib/pagination';
 import type { DabSuivi, FicheSuivi, Signal } from './suivi';
 
 const verifier = <T,>(r: { data: T | null; error: { message: string } | null }): T => {
@@ -8,11 +9,11 @@ const verifier = <T,>(r: { data: T | null; error: { message: string } | null }):
 
 export async function chargerSuivi() {
   const [dabs, sites, banques, fiches, signaux] = await Promise.all([
-    supabase.from('dab').select('id, code, ville, site_id, agence_saisie, origine').then(verifier),
-    supabase.from('sites').select('id, nom, banque_id').then(verifier),
-    supabase.from('banques').select('id, code').then(verifier),
-    supabase.from('fiches').select('id, dab_id, statut, arrivee_at, depart_at, consultant_id').then(verifier),
-    supabase.from('v_fiches_signaux').select('*').then(verifier),
+    toutLire((de, a) => supabase.from('dab').select('id, code, ville, site_id, agence_saisie, origine').range(de, a)),
+    toutLire((de, a) => supabase.from('sites').select('id, nom, banque_id').range(de, a)),
+    toutLire((de, a) => supabase.from('banques').select('id, code').range(de, a)),
+    toutLire((de, a) => supabase.from('fiches').select('id, dab_id, statut, arrivee_at, depart_at, consultant_id').range(de, a)),
+    toutLire((de, a) => supabase.from('v_fiches_signaux').select('*').range(de, a)),
   ]) as [Record<string, string | null>[], Record<string, string>[], Record<string, string>[], FicheSuivi[], Signal[]];
   const d: DabSuivi[] = dabs.map((x) => {
     const s = sites.find((y) => y.id === x.site_id);
@@ -55,12 +56,12 @@ export async function renvoyer(id: string, motif: string) {
 export async function chargerExport() {
   const { dabs, fiches, signaux } = await chargerSuivi();
   const [completes, reponses, etats, pieces, articles, items] = await Promise.all([
-    supabase.from('fiches').select('*').then(verifier),
-    supabase.from('reponses_checklist').select('*').then(verifier),
-    supabase.from('etats_modules').select('*').then(verifier),
-    supabase.from('pieces_a_prevoir').select('*').then(verifier),
-    supabase.from('articles').select('pn, designation').then(verifier),
-    supabase.from('checklist_items').select('id, libelle').then(verifier),
+    toutLire((de, a) => supabase.from('fiches').select('*').range(de, a)),
+    toutLire((de, a) => supabase.from('reponses_checklist').select('*').range(de, a)),
+    toutLire((de, a) => supabase.from('etats_modules').select('*').range(de, a)),
+    toutLire((de, a) => supabase.from('pieces_a_prevoir').select('*').range(de, a)),
+    toutLire((de, a) => supabase.from('articles').select('pn, designation').range(de, a)),
+    toutLire((de, a) => supabase.from('checklist_items').select('id, libelle').range(de, a)),
   ]) as any[];
   return {
     fiches: (completes as any[]).map((f) => {
