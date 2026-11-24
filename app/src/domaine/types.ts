@@ -43,7 +43,7 @@ export interface Reponse { fiche_id: string; item_id: string; valeur: Valeur; co
 export interface EtatModule { fiche_id: string; module: string; etat: Etat; commentaire?: string; sync: Sync }
 export interface Piece { id: string; fiche_id: string; module: string; pn?: string | null; pn_libre?: string | null; quantite: number; sync: Sync; supprimee?: boolean }
 export interface Photo {
-  id: string; fiche_id: string; cible: string; blob?: Blob; prise_at: string | null; prise_tablette_at: string;
+  id: string; fiche_id: string; cible: string; donnees?: ArrayBuffer; type?: string; prise_at: string | null; prise_tablette_at: string;
   sync: Sync; televersee?: boolean;
 }
 

@@ -23,7 +23,7 @@ export function Signature({ ficheId }: { ficheId: string }) {
   async function valider() {
     const blob = await (await fetch(pad.current!.toDataURL('image/png'))).blob();
     await db.photos.put({
-      id: existante?.id ?? crypto.randomUUID(), fiche_id: ficheId, cible: 'signature', blob,
+      id: existante?.id ?? crypto.randomUUID(), fiche_id: ficheId, cible: 'signature', donnees: await blob.arrayBuffer(), type: 'image/png',
       prise_at: null, prise_tablette_at: new Date().toISOString(), sync: 'a_envoyer', televersee: false,
     });
   }

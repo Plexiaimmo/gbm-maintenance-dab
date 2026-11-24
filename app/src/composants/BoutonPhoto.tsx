@@ -13,11 +13,11 @@ export function BoutonPhoto({ ficheId, cible, libelle = 'Prendre la photo', onAj
   const [url, setUrl] = useState<string>();
 
   useEffect(() => {
-    if (!photo?.blob) { setUrl(undefined); return; }
-    const u = URL.createObjectURL(photo.blob);
+    if (!photo?.donnees) { setUrl(undefined); return; }
+    const u = URL.createObjectURL(new Blob([photo.donnees], { type: photo.type }));
     setUrl(u);
     return () => URL.revokeObjectURL(u);
-  }, [photo?.blob]);
+  }, [photo?.donnees, photo?.type]);
 
   async function choisi(f: File | undefined) {
     if (!f) return;

@@ -14,5 +14,5 @@ test('reprendre une photo remplace la précédente et la remet à envoyer', asyn
   expect(await db.photos.count()).toBe(1);
   expect(p?.sync).toBe('a_envoyer');
   expect(p?.televersee).toBe(false);
-  expect(p?.blob?.size).toBe(2);
+  expect(p?.donnees?.byteLength).toBe(2);
 });

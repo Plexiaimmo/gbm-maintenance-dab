@@ -7,7 +7,7 @@ export async function enregistrerPhoto(ficheId: string, cible: string, fichier: 
   const existante = await db.photos.where({ fiche_id: ficheId, cible }).first();
   const id = existante?.id ?? crypto.randomUUID();
   await db.photos.put({
-    id, fiche_id: ficheId, cible, blob: p.blob, prise_at: p.prise_at?.toISOString() ?? null,
+    id, fiche_id: ficheId, cible, donnees: await p.blob.arrayBuffer(), type: p.blob.type || 'image/jpeg', prise_at: p.prise_at?.toISOString() ?? null,
     prise_tablette_at: p.prise_tablette_at.toISOString(), sync: 'a_envoyer', televersee: false,
   });
   return id;
