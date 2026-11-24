@@ -1,6 +1,6 @@
 import type { Fiche } from '../../domaine/types';
 import { MODULES } from '../../domaine/types';
-import { majFiche } from '../../local/fiches';
+import { majPartie } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { vibrer } from '../../lib/tactile';
 import { Champ, OuiNon } from './Commun';
@@ -32,7 +32,7 @@ function TestInterne({ valeur, enregistrer }: { valeur?: string; enregistrer: (v
 
 export function Systeme({ fiche }: { fiche: Fiche }) {
   const s = fiche.systeme;
-  const maj = (p: Partial<Fiche['systeme']>) => majFiche(fiche.id, { systeme: { ...s, ...p } });
+  const maj = (p: Partial<Fiche['systeme']>) => majPartie(fiche.id, 'systeme', p);
   return (
     <section>
       <Champ libelle="Version de Windows" valeur={s.version_windows} suggestions={WINDOWS} enregistrer={(v) => maj({ version_windows: v })} />

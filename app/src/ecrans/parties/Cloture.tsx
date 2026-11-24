@@ -1,12 +1,12 @@
 import type { Fiche } from '../../domaine/types';
-import { majFiche } from '../../local/fiches';
+import { majPartie } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { Signature } from '../../composants/Signature';
 import { Champ, Choix } from './Commun';
 
 export function Cloture({ fiche }: { fiche: Fiche }) {
   const c = fiche.cloture;
-  const maj = (p: Partial<Fiche['cloture']>) => majFiche(fiche.id, { cloture: { ...c, ...p } });
+  const maj = (p: Partial<Fiche['cloture']>) => majPartie(fiche.id, 'cloture', p);
   return (
     <section>
       <h2>Ticket test</h2>

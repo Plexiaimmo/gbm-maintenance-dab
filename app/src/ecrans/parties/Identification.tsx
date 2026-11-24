@@ -1,6 +1,6 @@
 import type { Dab, Fiche } from '../../domaine/types';
 import { normaliserSN } from '../../domaine/sn';
-import { majFiche } from '../../local/fiches';
+import { majPartie } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { Champ } from './Commun';
 
@@ -8,7 +8,7 @@ const MODELES = ['ProCash 280', 'ProCash 2050xe', 'ProCash 2100xe', 'ProCash 225
 
 export function Identification({ fiche, dab }: { fiche: Fiche; dab?: Dab }) {
   const id = fiche.identification;
-  const maj = (patch: Partial<Fiche['identification']>) => majFiche(fiche.id, { identification: { ...id, ...patch } });
+  const maj = (patch: Partial<Fiche['identification']>) => majPartie(fiche.id, 'identification', patch);
   return (
     <section>
       <p className={fiche.gps_motif ? 'bandeau-info attention' : 'bandeau-info'}>

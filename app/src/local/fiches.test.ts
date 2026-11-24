@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from 'vitest';
 import { db } from './db';
-import { chargerFicheComplete, creerFiche, majFiche, repondre, terminerFiche } from './fiches';
+import { chargerFicheComplete, creerFiche, majFiche, majPartie, repondre, terminerFiche } from './fiches';
 import { MODULES, type ChecklistItem } from '../domaine/types';
 
 const ITEMS: ChecklistItem[] = [{ id: 'A', ordre: 1, libelle: 'A', module: 'PC', consigne: '', obligatoire: true,
@@ -62,4 +62,17 @@ test('fiche renvoyée : repasse en brouillon à la première modification', asyn
   await db.fiches.update(id, { statut: 'renvoyee', sync: 'envoye' });
   await majFiche(id, { identification: { modele: 'ProCash 280', numero_serie: 'SN10' } });
   expect((await db.fiches.get(id))?.statut).toBe('brouillon');
+});
+
+test('saisies rapides sur deux champs d\'une même partie : aucune ne s\'efface (fusion dans la base, pas depuis l\'écran)', async () => {
+  const id = await creerFiche('d1', 'c1', arrivee);
+  await Promise.all([
+    majPartie(id, 'systeme', { logiciel_version: '3.3.1' }),
+    majPartie(id, 'systeme', { espace_disque_go: '42' }),
+    majPartie(id, 'cloture', { gestionnaire_nom: 'G' }),
+    majPartie(id, 'cloture', { tension_phase_neutre: '228' }),
+  ]);
+  const f = await db.fiches.get(id);
+  expect(f?.systeme).toMatchObject({ logiciel_version: '3.3.1', espace_disque_go: '42' });
+  expect(f?.cloture).toMatchObject({ gestionnaire_nom: 'G', tension_phase_neutre: '228' });
 });

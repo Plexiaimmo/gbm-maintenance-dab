@@ -26,6 +26,15 @@ export async function creerFiche(dabId: string, consultantId: string, a: Arrivee
 
 export const majFiche = (id: string, patch: Partial<Fiche>) => toucher(id, patch);
 
+type Partie = 'identification' | 'systeme' | 'cloture';
+/** Modifie quelques champs d'une partie en fusionnant avec ce qui est en base, dans une transaction :
+ *  deux saisies rapprochées (avant que l'écran ait relu la base) ne s'écrasent pas. */
+export const majPartie = <K extends Partie>(id: string, partie: K, patch: Partial<Fiche[K]>) =>
+  db.transaction('rw', db.fiches, async () => {
+    const f = await db.fiches.get(id);
+    await toucher(id, { [partie]: { ...(f?.[partie] ?? {}), ...patch } } as Partial<Fiche>);
+  });
+
 export async function repondre(ficheId: string, itemId: string, valeur: Valeur, commentaire?: string) {
   const avant = await db.reponses.get([ficheId, itemId]);
   await db.reponses.put({ fiche_id: ficheId, item_id: itemId, valeur, commentaire: commentaire ?? avant?.commentaire, sync: 'a_envoyer' });
