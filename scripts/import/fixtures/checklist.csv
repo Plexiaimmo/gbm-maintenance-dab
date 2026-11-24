@@ -1,0 +1,42 @@
+ItemID,TypeIntervention,Ordre,Libelle,Obligatoire,Modele,Module,Consigne,PhotoRequise,CommentaireRequis,Actif
+CHK-P01,Préventive,1,Nettoyage lecteur de carte,OUI,Tous,,Ancien point v6 — remplacé par le catalogue v7,NON,NON,NON
+CHK-P02,Préventive,2,"Nettoyage et contrôle du distributeur (courroies, capteurs)",OUI,Tous,,Ancien point v6 — remplacé par le catalogue v7,NON,NON,NON
+CHK-P03,Préventive,3,Test des cassettes,OUI,Tous,,Ancien point v6 — remplacé par le catalogue v7,NON,NON,NON
+CHK-P04,Préventive,4,Test clavier EPP et écran,OUI,Tous,,Ancien point v6 — remplacé par le catalogue v7,NON,NON,NON
+CHK-P05,Préventive,5,Contrôle imprimante et niveau papier,OUI,Tous,,Ancien point v6 — remplacé par le catalogue v7,NON,NON,NON
+CHK-P06,Préventive,6,Contrôle alimentation / onduleur / mise à la terre,OUI,Tous,,Ancien point v6 — remplacé par le catalogue v7,NON,NON,NON
+CHK-P07,Préventive,7,Transaction de test réussie,OUI,Tous,,Ancien point v6 — remplacé par le catalogue v7,NON,NON,NON
+CHK-C01,Curative,1,Transaction de test réussie après réparation,OUI,Tous,Test final,,NON,NON,OUI
+CHK-P101,Préventive,10,Dépoussiérage intérieur du PC,OUI,Tous,PC,Dépoussiérer l'intérieur du PC (air comprimé / brosse).,NON,NON,OUI
+CHK-P102,Préventive,20,Ventilateurs,OUI,Tous,PC,Vérifier le bon fonctionnement des ventilateurs du PC et du GAB.,NON,NON,OUI
+CHK-P103,Préventive,30,Dépoussiérage lecteur et photosensors,OUI,Tous,Lecteur carte,Dépoussiérer le lecteur et nettoyer les photosensors. Tissus sans débris uniquement.,NON,NON,OUI
+CHK-P104,Préventive,40,Shutter du lecteur,OUI,Tous,Lecteur carte,Nettoyer le shutter avec une brosse.,NON,NON,OUI
+CHK-P105,Préventive,50,Courroie de transport du lecteur,OUI,Tous,Lecteur carte,Nettoyer la courroie de transport avec de l'alcool.,NON,NON,OUI
+CHK-P106,Préventive,60,Station chip et têtes R/W,OUI,Tous,Lecteur carte,Nettoyer la station de contact chipcard (brosse) et les têtes R/W (carte ou règle de nettoyage).,NON,NON,OUI
+CHK-P107,Préventive,70,Test lecture carte,OUI,Tous,Lecteur carte,Tester la lecture piste et puce avec une carte test.,NON,NON,OUI
+CHK-P108,Préventive,80,Clavier EPP et touches de fonction,OUI,Tous,Panneau frontal,Nettoyer la surface du clavier EPP ; tester toutes les touches PIN et les touches de fonction.,NON,NON,OUI
+CHK-P109,Préventive,90,Écran et vitre de protection,OUI,Tous,Panneau frontal,Nettoyer l'écran / LCD et la vitre de protection ; vérifier l'affichage.,NON,NON,OUI
+CHK-P110,Préventive,100,Caméra frontale,NON,Tous,Panneau frontal,Nettoyer la caméra et vérifier son fonctionnement (N/A si absente).,NON,NON,OUI
+CHK-P111,Préventive,110,Photosensors du module de distribution,OUI,Tous,Distributeur,Dépoussiérer tous les photosensors (stacker et séparateur) ; retirer restes de papier et poussière. Photo après nettoyage.,OUI,NON,OUI
+CHK-P112,Préventive,120,Courroies et rouleaux,OUI,Tous,Distributeur,Courroies mobiles et centrées sur les rouleaux dans les deux sens (roue verte sur Wincor) ; axes et rouleaux non endommagés ; pas d'usure.,NON,NON,OUI
+CHK-P113,Préventive,130,Fixation séparateur / stacker,OUI,Tous,Distributeur,"Séparateur et stacker en bonne position, vis serrées sur le châssis ; pièces mobiles en bon état.",NON,NON,OUI
+CHK-P114,Préventive,140,Chemin des billets libre,OUI,Tous,Distributeur,Aucun câble ni corde dans le chemin des billets.,NON,NON,OUI
+CHK-P115,Préventive,150,Tendeurs et ressorts (Wincor),OUI,Wincor,Distributeur,Tendeur horizontal mobile ; tendeur des courroies jaunes et ressorts bien fixés ; ressorts des guide fingers accrochés.,NON,NON,OUI
+CHK-P116,Préventive,160,Commutateur bundle rejeté (Wincor),OUI,Wincor,Distributeur,Sous le commutateur du bundle rejeté : axe et roue blanche d'actionnement en place.,NON,NON,OUI
+CHK-P117,Préventive,170,Cellule L1 (Wincor),OUI,Wincor,Distributeur,Chemin L1 dégagé ; nettoyer les roues près de la cellule L1.,NON,NON,OUI
+CHK-P118,Préventive,180,Force de maintien (Wincor),OUI,Wincor,Distributeur,Essayer de retirer un billet entre les courroies : elles doivent se plier.,NON,NON,OUI
+CHK-P119,Préventive,190,Contrôle des cassettes,OUI,Tous,Cassettes,Retirer les cassettes ; contrôler tout endommagement ; vérifier les réglages largeur / hauteur (y compris dans le couvercle).,NON,NON,OUI
+CHK-P120,Préventive,200,Chariot de pression,OUI,Tous,Cassettes,Vérifier la fixation du chariot de pression ; ajuster si nécessaire.,NON,NON,OUI
+CHK-P121,Préventive,210,Cassette rejet,OUI,Tous,Cassettes,Nettoyer les rollers à l'alcool ; vérifier que la roue dentée est bien fixée.,NON,NON,OUI
+CHK-P122,Préventive,220,Nettoyage imprimante reçu,OUI,Tous,Imprimantes,Retirer résidus de papier et de ruban ; dépoussiérer les photosensors ; nettoyer l'axe de la tête (ND9x / TP07 / NP06 sur Wincor).,NON,NON,OUI
+CHK-P123,Préventive,230,Qualité d'impression,OUI,Tous,Imprimantes,Imprimer un ticket test. Barre thermique à remplacer → NOK et déclarer la pièce.,NON,NON,OUI
+CHK-P124,Préventive,240,Imprimante journal,NON,Tous,Imprimantes,Même nettoyage que l'imprimante reçu (N/A si journal électronique uniquement).,NON,NON,OUI
+CHK-P125,Préventive,250,Amortisseurs de portes,OUI,Tous,Généralités,Contrôler le fonctionnement des amortisseurs de portes.,NON,NON,OUI
+CHK-P126,Préventive,260,Masses et câbles,OUI,Tous,Généralités,Contrôler les connexions de masse et des câbles ; aucun câble endommagé.,NON,NON,OUI
+CHK-P127,Préventive,270,Tension secteur et terre,OUI,Tous,Généralités,Mesurer phase-neutre et neutre-terre ; noter les valeurs en commentaire ; photo du multimètre.,OUI,OUI,OUI
+CHK-P128,Préventive,280,Serrures et contacts de porte,OUI,Tous,Généralités,Contrôler le bon fonctionnement des serrures et des contacts.,NON,NON,OUI
+CHK-P129,Préventive,290,Onduleur (UPS),NON,Tous,Généralités,Vérifier l'état de la batterie et la bascule sur onduleur (N/A si absent).,NON,NON,OUI
+CHK-P130,Préventive,300,Anti-skimming,OUI,Tous,Sécurité,"Vérifier l'absence de dispositif étranger sur le lecteur, le clavier et la façade.",NON,NON,OUI
+CHK-P131,Préventive,310,Journaux d'erreurs,OUI,Tous,Logiciel,Consulter les erreurs récentes ; vérifier date / heure système et espace disque.,NON,NON,OUI
+CHK-P132,Préventive,320,Test interne des modules,OUI,Tous,Test final,Lancer le test interne de chaque module (si disponible) ; noter en commentaire les modules en erreur.,NON,NON,OUI
+CHK-P133,Préventive,330,Sensibilisation du gestionnaire,OUI,Tous,Test final,"Rappeler : air comprimé au moins 1 fois / 20 jours, billets conformes, retrait des cartes ou objets coincés. Noter le nom du gestionnaire.",NON,OUI,OUI

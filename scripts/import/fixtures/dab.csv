@@ -1,0 +1,7 @@
+banque_code,banque_nom,agence,ville,code_dab,marque,modele,numero_serie,lat,lng
+BGFI,BGFIBank Congo,Agence Centre,Brazzaville,BGFI-BZV-01,Wincor Nixdorf,ProCash 2050xe, ab 12-3 ,-4.2634,15.2429
+BGFI,BGFIBank Congo,Agence Port,Pte-Noire,BGFI-PNR-01,WINCOR,ProCash 280,,,
+BPC,Banque Postale du Congo,Agence Poto-Poto,BZV,BPC-BZV-07,NCR,SelfServ 22,NCR999,,
+BPC,Banque Postale du Congo,Agence Dolisie,Dolisie,BPC-DOL-01,Wincor,ProCash 2100,W1,,
+UBA,UBA Congo,Agence Plateau,Brazzaville,UBA-BZV-02,Diebold Nixdorf,ProCash 2050xe,DN77,-4.27,15.28
+UBA,UBA Congo,Agence Plateau,Brazzaville,UBA-BZV-02,Diebold Nixdorf,ProCash 2050xe,DN78,-4.27,15.28
