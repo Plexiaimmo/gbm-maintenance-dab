@@ -50,3 +50,25 @@ export async function renvoyer(id: string, motif: string) {
   const { error } = await supabase.rpc('renvoyer_fiche', { p_id: id, motif });
   if (error) throw new Error(error.message);
 }
+
+/** Rassemble toutes les fiches pour l'export Excel. */
+export async function chargerExport() {
+  const { dabs, fiches, signaux } = await chargerSuivi();
+  const [completes, reponses, etats, pieces, articles, items] = await Promise.all([
+    supabase.from('fiches').select('*').then(verifier),
+    supabase.from('reponses_checklist').select('*').then(verifier),
+    supabase.from('etats_modules').select('*').then(verifier),
+    supabase.from('pieces_a_prevoir').select('*').then(verifier),
+    supabase.from('articles').select('pn, designation').then(verifier),
+    supabase.from('checklist_items').select('id, libelle').then(verifier),
+  ]) as any[];
+  return {
+    fiches: (completes as any[]).map((f) => {
+      const d = dabs.find((x) => x.id === f.dab_id); const s = signaux.find((x) => x.fiche_id === f.id);
+      return { ...f, dab_code: d?.code ?? '', banque: d?.banque ?? '', agence: d?.agence ?? '', ville: d?.ville ?? null,
+        douteux: !!s?.douteux, raisons: s?.raisons ?? [], sans_signature: !!f.sans_signature };
+    }),
+    reponses: (reponses as any[]).map((r) => ({ ...r, libelle: (items as any[]).find((i) => i.id === r.item_id)?.libelle ?? r.item_id })),
+    etats, pieces, articles, _nb: fiches.length,
+  };
+}

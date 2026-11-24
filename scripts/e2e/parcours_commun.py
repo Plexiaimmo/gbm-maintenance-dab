@@ -10,6 +10,7 @@ DATA = {
     "banques": [{"id": "b1", "code": "TEST", "nom": "Banque de test"}],
     "checklist_items": CHECK, "articles": [{"pn": "01750000000", "designation": "Courroie"}],
     "parametres": [{"cle": "duree_min_minutes", "valeur": "60"}],
+    "profils": [{"role": "consultant"}],
 }
 envois = []
 objets = {}
@@ -23,7 +24,10 @@ def route(r):
     if "/rest/v1/" in u:
         t = u.split("/rest/v1/")[1].split("?")[0]
         if r.request.method == "GET":
-            return r.fulfill(json=DATA.get(t, []))
+            rows = DATA.get(t, [])
+            if "vnd.pgrst.object" in (r.request.headers.get("accept") or ""):
+                return r.fulfill(json=rows[0] if rows else None)
+            return r.fulfill(json=rows)
         envois.append((r.request.method, t))
         return r.fulfill(status=201, json=[])
     if "/storage/v1/" in u:

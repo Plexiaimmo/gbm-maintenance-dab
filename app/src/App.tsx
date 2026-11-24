@@ -12,6 +12,7 @@ import { EtatEnvoi } from './composants/EtatEnvoi';
 import { useSynchro } from './sync/useSynchro';
 import { Suivi } from './ecrans/admin/Suivi';
 import { FicheDetail } from './ecrans/admin/FicheDetail';
+import { chargerExport } from './admin/donnees';
 
 type Ecran = { nom: 'suivi' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' } | { nom: 'nouveau' } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
 
@@ -25,7 +26,7 @@ export default function App() {
   useEffect(() => {
     if (!session) return;
     supabase.from('profils').select('role').eq('id', session.user.id).single().then(({ data }) => {
-      if (!data) return;
+      if (!data?.role) return;
       localStorage.setItem('role', data.role); setRole(data.role);
       if (data.role !== 'consultant') setEcran((e) => (e.nom === 'liste' ? { nom: 'suivi' } : e));
     });
@@ -60,7 +61,11 @@ export default function App() {
       </header>
       {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} enLigne={synchro.enLigne} erreur={synchro.dernier?.erreur} lancer={synchro.lancer} />}
       {message && ecran.nom === 'liste' && <p className="page info">{message}</p>}
-      {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => setEcran({ nom: 'detail', ficheId })} />}
+      {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => setEcran({ nom: 'detail', ficheId })}
+        exporter={async () => {
+          const [{ construireClasseur }, XLSX, d] = await Promise.all([import('./admin/export'), import('xlsx'), chargerExport()]);
+          XLSX.writeFile(construireClasseur(d), `releve-wincor-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }} />}
       {ecran.nom === 'detail' && <FicheDetail ficheId={ecran.ficheId} admin={role === 'admin'} retour={() => setEcran({ nom: 'suivi' })} />}
       {ecran.nom === 'liste' && <ListeDab ouvrir={ouvrirDab} nouveau={() => setEcran({ nom: 'nouveau' })} />}
       {ecran.nom === 'nouveau' && <NouveauDab consultantId={moi} cree={(dabId) => setEcran({ nom: 'arrivee', dabId })} annuler={() => setEcran({ nom: 'liste' })} />}
