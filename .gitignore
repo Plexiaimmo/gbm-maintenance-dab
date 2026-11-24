@@ -1,6 +1,5 @@
 node_modules/
 dist/
-app/.env
 data/source/
 data/seed/
 app/node_modules/
