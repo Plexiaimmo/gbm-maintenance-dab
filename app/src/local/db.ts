@@ -20,7 +20,7 @@ export class BaseLocale extends Dexie {
       dab: 'id, code, ville, sync', sites: 'id', banques: 'id', checklist: 'id, ordre', articles: 'pn',
       parametres: 'cle',
       fiches: 'id, dab_id, statut, sync', reponses: '[fiche_id+item_id], fiche_id, sync',
-      etats: '[fiche_id+module], fiche_id, sync', pieces: 'id, fiche_id, sync', photos: 'id, fiche_id, cible, sync',
+      etats: '[fiche_id+module], fiche_id, sync', pieces: 'id, fiche_id, sync', photos: 'id, fiche_id, cible, sync, [fiche_id+cible]',
     });
   }
 }
