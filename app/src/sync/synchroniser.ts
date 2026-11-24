@@ -73,7 +73,20 @@ async function executer(client: SupabaseClient): Promise<Bilan> {
 
     for (const d of await db.dab.where('sync').equals('a_envoyer').toArray() as Dab[]) await chaque('dab', d.id, async () => {
       const r = await client.from('dab').insert([sansSync(d)]);
-      if (r.error && r.error.code !== '23505') await appel(async () => r);
+      if (r.error?.code === '23505') {
+        // déjà présent sur le serveur (même code) : on rattache les fiches au DAB du serveur
+        const { data } = await client.from('dab').select('id').eq('code', d.code);
+        const idServeur = (data as { id: string }[] | null)?.[0]?.id;
+        if (idServeur && idServeur !== d.id) {
+          await db.transaction('rw', db.dab, db.fiches, async () => {
+            await db.fiches.where('dab_id').equals(d.id).modify({ dab_id: idServeur, sync: 'a_envoyer' });
+            await db.dab.delete(d.id);
+            await db.dab.put({ ...d, id: idServeur, sync: 'envoye' });
+          });
+          envoyes++;
+          return;
+        }
+      } else if (r.error) await appel(async () => r);
       await marquer('dab', d.id, d);
     });
     for (const f of await db.fiches.where('sync').equals('a_envoyer').toArray() as Fiche[]) await chaque('fiches', f.id, async () => {

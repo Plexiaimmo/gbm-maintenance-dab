@@ -151,3 +151,15 @@ test('renvoi de l\'admin pendant une modification locale : le renvoi n\'est pas 
   expect(await db.fiches.get('f1')).toMatchObject({ statut: 'renvoyee', motif_renvoi: 'Photo floue' });
   expect(cl.lignes.reponses_checklist.size).toBe(1); // les réponses partent quand même
 });
+
+test('nouveau DAB dont le code existe déjà sur le serveur : la fiche est rattachée au DAB du serveur', async () => {
+  await db.dab.put({ id: 'local', code: 'BGFI-07', site_id: null, marque: 'Wincor', modele: 'P', numero_serie: null, ville: 'Brazzaville',
+    origine: 'nouveau_a_verifier', cree_par: 'c1', sync: 'a_envoyer' });
+  await jeu(0); await db.fiches.update('f1', { dab_id: 'local' });
+  const cl = c(); cl.lignes.dab = new Map([['serveur', { id: 'serveur', code: 'BGFI-07' }]]);
+  const r = await synchroniser(cl as never);
+  expect(r).toMatchObject({ restants: 0, rejetes: 0 });
+  expect((cl.lignes.fiches.get('f1') as { dab_id: string }).dab_id).toBe('serveur');
+  expect((await db.fiches.get('f1'))?.dab_id).toBe('serveur');
+  expect(await db.dab.get('local')).toBeUndefined();
+});

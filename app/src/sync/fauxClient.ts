@@ -26,7 +26,8 @@ export class FauxClient {
       async insert(rows: Record<string, unknown>[]) {
         const p = self.panne('insert', t); if (p) return p;
         for (const r of rows) {
-          if (self.table(t).has(String(r.id))) return { error: { message: 'duplicate', code: '23505' }, status: 409 };
+          if (self.table(t).has(String(r.id)) || (t === 'dab' && [...self.table(t).values()].some((x) => x.code === r.code)))
+            return { error: { message: 'duplicate', code: '23505' }, status: 409 };
           self.table(t).set(String(r.id), r);
         }
         return { error: null, status: 201 };
@@ -35,7 +36,10 @@ export class FauxClient {
         return { async in(_c: string, ids: string[]) { const p = self.panne('delete', t); if (p) return p; ids.forEach((i) => self.table(t).delete(i)); return { error: null }; } };
       },
       select() {
-        return { async eq() { return { data: t === 'fiches' ? self.serveurFiches : [], error: null }; } };
+        return { async eq(col: string, val: unknown) {
+          if (t === 'fiches') return { data: self.serveurFiches, error: null };
+          return { data: [...self.table(t).values()].filter((r) => r[col] === val), error: null };
+        } };
       },
     };
   }
