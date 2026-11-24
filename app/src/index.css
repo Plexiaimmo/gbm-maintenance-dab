@@ -41,3 +41,7 @@ fieldset { border: 0; padding: 0; margin: 0; }
 .ajout-piece input { margin-top: 0; }
 .question { margin: 12px 0; font-weight: 600; }
 [hidden] { display: none !important; }
+.etat-envoi { margin: 0; padding: 8px 16px; font-weight: 600; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.etat-envoi.ok { background: #e3f4e7; color: #1b7a2f; }
+.etat-envoi.attente { background: #fff4d6; color: #7a5a00; }
+.etat-envoi.hors { background: #fde2e1; color: #8a1c14; }

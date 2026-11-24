@@ -8,6 +8,8 @@ import { ListeDab } from './ecrans/ListeDab';
 import { NouveauDab } from './ecrans/NouveauDab';
 import { Arrivee } from './ecrans/Arrivee';
 import { Fiche } from './ecrans/Fiche';
+import { EtatEnvoi } from './composants/EtatEnvoi';
+import { useSynchro } from './sync/useSynchro';
 
 type Ecran = { nom: 'liste' } | { nom: 'nouveau' } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
 
@@ -15,6 +17,7 @@ export default function App() {
   const { session, pret } = useSession();
   const [message, setMessage] = useState('');
   const [ecran, setEcran] = useState<Ecran>({ nom: 'liste' });
+  const synchro = useSynchro(!!session);
 
   useEffect(() => {
     if (!session) return;
@@ -40,11 +43,12 @@ export default function App() {
         <span>GBM Relevé DAB</span>
         <button className="petit" onClick={() => supabase.auth.signOut()}>Déconnexion</button>
       </header>
+      <EtatEnvoi attente={synchro.attente} enLigne={synchro.enLigne} erreur={synchro.dernier?.erreur} lancer={synchro.lancer} />
       {message && ecran.nom === 'liste' && <p className="page info">{message}</p>}
       {ecran.nom === 'liste' && <ListeDab ouvrir={ouvrirDab} nouveau={() => setEcran({ nom: 'nouveau' })} />}
       {ecran.nom === 'nouveau' && <NouveauDab consultantId={moi} cree={(dabId) => setEcran({ nom: 'arrivee', dabId })} annuler={() => setEcran({ nom: 'liste' })} />}
       {ecran.nom === 'arrivee' && <Arrivee dabId={ecran.dabId} consultantId={moi} ouverte={(ficheId) => setEcran({ nom: 'fiche', ficheId })} annuler={() => setEcran({ nom: 'liste' })} />}
-      {ecran.nom === 'fiche' && <Fiche ficheId={ecran.ficheId} retour={() => setEcran({ nom: 'liste' })} apresTerminer={() => setEcran({ nom: 'liste' })} />}
+      {ecran.nom === 'fiche' && <Fiche ficheId={ecran.ficheId} retour={() => setEcran({ nom: 'liste' })} apresTerminer={() => { setEcran({ nom: 'liste' }); void synchro.lancer(); }} />}
     </>
   );
 }
