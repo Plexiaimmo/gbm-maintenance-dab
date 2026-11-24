@@ -140,3 +140,14 @@ test('fiche validée par l\'admin : ses éléments encore en attente sont mis de
   expect((await db.photos.get('p1'))?.sync).toBe('rejete');
   expect(r.restants).toBe(0);
 });
+
+test('renvoi de l\'admin pendant une modification locale : le renvoi n\'est pas écrasé', async () => {
+  await jeu(0); await db.fiches.update('f1', { statut: 'terminee', sync: 'a_envoyer' }); // modifiée après Terminer
+  const cl = c(); const fichesEnvoyees: unknown[] = [];
+  cl.pannes.push((op, t) => { if (op === 'upsert' && t === 'fiches') fichesEnvoyees.push(t); return null; });
+  cl.serveurFiches = [{ id: 'f1', statut: 'renvoyee', motif_renvoi: 'Photo floue' }];
+  await synchroniser(cl as never);
+  expect(fichesEnvoyees).toEqual([]);
+  expect(await db.fiches.get('f1')).toMatchObject({ statut: 'renvoyee', motif_renvoi: 'Photo floue' });
+  expect(cl.lignes.reponses_checklist.size).toBe(1); // les réponses partent quand même
+});

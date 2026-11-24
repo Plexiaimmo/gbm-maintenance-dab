@@ -77,7 +77,8 @@ async function executer(client: SupabaseClient): Promise<Bilan> {
       await marquer('dab', d.id, d);
     });
     for (const f of await db.fiches.where('sync').equals('a_envoyer').toArray() as Fiche[]) await chaque('fiches', f.id, async () => {
-      await appel(() => client.from('fiches').upsert([sansSync(f)], { onConflict: 'id' }));
+      // une fiche renvoyée non retouchée : le serveur a déjà la bonne version, on n'écrase pas le renvoi
+      if (f.statut !== 'renvoyee') await appel(() => client.from('fiches').upsert([sansSync(f)], { onConflict: 'id' }));
       await marquer('fiches', f.id, f);
     });
     for (const r of await db.reponses.where('sync').equals('a_envoyer').toArray()) await chaque('reponses', [r.fiche_id, r.item_id], async () => {
@@ -128,7 +129,8 @@ async function recupererStatuts(client: SupabaseClient) {
         for (const cle of await t.where('fiche_id').equals(s.id).filter((x) => x.sync === 'a_envoyer').primaryKeys())
           await mettreDeCote(t, cle, 'Fiche déjà validée');
     }
-    else if (s.statut === 'renvoyee' && f.sync === 'envoye') await db.fiches.update(s.id, { statut: 'renvoyee', motif_renvoi: s.motif_renvoi });
+    // le renvoi l'emporte sur une fiche « terminée » de la tablette, même modifiée depuis : sinon l'envoi l'écraserait
+    else if (s.statut === 'renvoyee' && f.statut === 'terminee') await db.fiches.update(s.id, { statut: 'renvoyee', motif_renvoi: s.motif_renvoi });
   }
 }
 
