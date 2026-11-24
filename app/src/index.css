@@ -45,3 +45,17 @@ fieldset { border: 0; padding: 0; margin: 0; }
 .etat-envoi.ok { background: #e3f4e7; color: #1b7a2f; }
 .etat-envoi.attente { background: #fff4d6; color: #7a5a00; }
 .etat-envoi.hors { background: #fde2e1; color: #8a1c14; }
+.page.large { max-width: 1200px; }
+.compteurs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0; }
+.compteurs div { background: #fff; border-radius: 10px; padding: 10px; text-align: center; border: 1px solid #dde3e8; }
+.compteurs b { font-size: 1.6rem; display: block; } .compteurs span { color: #5b6670; font-size: .85rem; }
+.alerte { color: #b00020; }
+.filtres select { margin-top: 0; }
+.tableau { width: 100%; border-collapse: collapse; background: #fff; font-size: .9rem; }
+.tableau td, .tableau th { border-bottom: 1px solid #e3e8ec; padding: 6px 8px; text-align: left; vertical-align: top; }
+.tableau tr.cliquable { cursor: pointer; } .tableau tr.cliquable:hover { background: #eef4fa; }
+.tableau tr.nok td { background: #fdecec; }
+.detail .vignette { cursor: zoom-in; margin: 4px; }
+.loupe { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.loupe img { max-width: 95vw; max-height: 95vh; }
+.actions { display: grid; gap: 10px; margin: 20px 0; }

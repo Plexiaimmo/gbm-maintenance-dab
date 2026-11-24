@@ -10,14 +10,26 @@ import { Arrivee } from './ecrans/Arrivee';
 import { Fiche } from './ecrans/Fiche';
 import { EtatEnvoi } from './composants/EtatEnvoi';
 import { useSynchro } from './sync/useSynchro';
+import { Suivi } from './ecrans/admin/Suivi';
+import { FicheDetail } from './ecrans/admin/FicheDetail';
 
-type Ecran = { nom: 'liste' } | { nom: 'nouveau' } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
+type Ecran = { nom: 'suivi' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' } | { nom: 'nouveau' } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
 
 export default function App() {
   const { session, pret } = useSession();
   const [message, setMessage] = useState('');
   const [ecran, setEcran] = useState<Ecran>({ nom: 'liste' });
+  const [role, setRole] = useState<string | null>(() => localStorage.getItem('role'));
   const synchro = useSynchro(!!session);
+
+  useEffect(() => {
+    if (!session) return;
+    supabase.from('profils').select('role').eq('id', session.user.id).single().then(({ data }) => {
+      if (!data) return;
+      localStorage.setItem('role', data.role); setRole(data.role);
+      if (data.role !== 'consultant') setEcran((e) => (e.nom === 'liste' ? { nom: 'suivi' } : e));
+    });
+  }, [session]);
 
   useEffect(() => {
     if (!session) return;
@@ -41,10 +53,15 @@ export default function App() {
     <>
       <header className="barre">
         <span>GBM Relevé DAB</span>
-        <button className="petit" onClick={() => supabase.auth.signOut()}>Déconnexion</button>
+        {role && role !== 'consultant' && (ecran.nom === 'suivi' || ecran.nom === 'detail'
+          ? role === 'admin' && <button className="petit" onClick={() => setEcran({ nom: 'liste' })}>Mode terrain</button>
+          : <button className="petit" onClick={() => setEcran({ nom: 'suivi' })}>Suivi</button>)}
+        <button className="petit" onClick={() => { localStorage.removeItem('role'); void supabase.auth.signOut(); }}>Déconnexion</button>
       </header>
-      <EtatEnvoi attente={synchro.attente} enLigne={synchro.enLigne} erreur={synchro.dernier?.erreur} lancer={synchro.lancer} />
+      {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} enLigne={synchro.enLigne} erreur={synchro.dernier?.erreur} lancer={synchro.lancer} />}
       {message && ecran.nom === 'liste' && <p className="page info">{message}</p>}
+      {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => setEcran({ nom: 'detail', ficheId })} />}
+      {ecran.nom === 'detail' && <FicheDetail ficheId={ecran.ficheId} admin={role === 'admin'} retour={() => setEcran({ nom: 'suivi' })} />}
       {ecran.nom === 'liste' && <ListeDab ouvrir={ouvrirDab} nouveau={() => setEcran({ nom: 'nouveau' })} />}
       {ecran.nom === 'nouveau' && <NouveauDab consultantId={moi} cree={(dabId) => setEcran({ nom: 'arrivee', dabId })} annuler={() => setEcran({ nom: 'liste' })} />}
       {ecran.nom === 'arrivee' && <Arrivee dabId={ecran.dabId} consultantId={moi} ouverte={(ficheId) => setEcran({ nom: 'fiche', ficheId })} annuler={() => setEcran({ nom: 'liste' })} />}
