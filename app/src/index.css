@@ -188,3 +188,4 @@ input:focus, textarea:focus, select:focus { border-color: var(--action); outline
 
 /* Paysage ou grand écran : deux colonnes pour les mesures, rail plus aéré */
 @media (max-width: 600px) { :root { font-size: 18px; } .rail-nom { font-size: .75rem; } .deux-colonnes { grid-template-columns: 1fr; } }
+.confirmer-sortie { background: var(--surface, #fff); border-bottom: 2px solid var(--action); }

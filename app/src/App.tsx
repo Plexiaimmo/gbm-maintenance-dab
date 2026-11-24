@@ -23,6 +23,7 @@ export default function App() {
   const [role, setRole] = useState<string | null>(() => localStorage.getItem('role'));
   const synchro = useSynchro(!!session);
   const [reconnexion, setReconnexion] = useState(false);
+  const [quitter, setQuitter] = useState(false);
   useEffect(() => { if (session) setReconnexion(false); }, [session]);
 
   useEffect(() => {
@@ -59,8 +60,17 @@ export default function App() {
         {role && role !== 'consultant' && (ecran.nom === 'suivi' || ecran.nom === 'detail'
           ? role === 'admin' && <button className="petit" onClick={() => setEcran({ nom: 'liste' })}>Mode terrain</button>
           : <button className="petit" onClick={() => setEcran({ nom: 'suivi' })}>Suivi</button>)}
-        <button className="petit" onClick={() => void deconnecter()}>Déconnexion</button>
+        <button className="petit" onClick={() => setQuitter(true)}>Déconnexion</button>
       </header>
+      {quitter && (
+        <div className="page confirmer-sortie" role="alertdialog" aria-label="Confirmer la déconnexion">
+          <p>Se déconnecter ? Les saisies non envoyées restent sur la tablette, mais il faudra du réseau pour se reconnecter.</p>
+          <div className="actions">
+            <button onClick={() => void deconnecter()}>Oui, me déconnecter</button>
+            <button className="secondaire" onClick={() => setQuitter(false)}>Annuler</button>
+          </div>
+        </div>
+      )}
       {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} refuses={synchro.refuses} enLigne={synchro.enLigne} erreur={!session ? 'session' : synchro.dernier?.erreur} lancer={synchro.lancer} reconnecter={() => setReconnexion(true)} />}
       {message && ecran.nom === 'liste' && <p className="page info">{message}</p>}
       {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => setEcran({ nom: 'detail', ficheId })}

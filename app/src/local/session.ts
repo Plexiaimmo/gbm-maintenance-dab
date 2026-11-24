@@ -28,9 +28,10 @@ export function useSession(): { session: Session | null; utilisateur: Utilisateu
   return { session, utilisateur: utilisateurCourant(session), pret };
 }
 
-export async function deconnecter() {
-  if (!window.confirm('Se déconnecter ? Les saisies non envoyées restent sur la tablette, mais il faudra du réseau pour se reconnecter.')) return;
+/** La confirmation se fait dans l'application (bouton « Oui, me déconnecter ») :
+ *  window.confirm est bloqué dans certains navigateurs et répond « non » sans rien afficher. */
+export async function deconnecter(recharger: () => void = () => window.location.reload()) {
   oublierUtilisateur();
   await supabase.auth.signOut().catch(() => undefined);
-  window.location.reload();
+  recharger();
 }

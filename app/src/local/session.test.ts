@@ -17,3 +17,15 @@ test('déconnexion volontaire : plus d\'utilisateur', () => {
   memoriserUtilisateur('u3'); oublierUtilisateur();
   expect(utilisateurCourant(null)).toBeNull();
 });
+
+test('déconnexion : ne dépend pas de window.confirm (bloqué dans certains navigateurs, il répond « non » sans rien afficher)', async () => {
+  const { deconnecter } = await import('./session');
+  const avant = window.confirm;
+  window.confirm = () => false;
+  memoriserUtilisateur('u4');
+  let recharge = false;
+  await deconnecter(() => { recharge = true; });
+  window.confirm = avant;
+  expect(utilisateurCourant(null)).toBeNull();
+  expect(recharge).toBe(true);
+});
