@@ -115,3 +115,28 @@ test('statut décidé par l\'admin récupéré : renvoyée avec motif, validée'
   expect(await db.fiches.get('f1')).toMatchObject({ statut: 'renvoyee', motif_renvoi: 'Photo floue' });
   expect((await db.fiches.get('f2'))?.statut).toBe('validee');
 });
+
+test('un enregistrement refusé définitivement ne bloque pas les autres', async () => {
+  await jeu(2); const cl = c();
+  await db.fiches.put({ ...(await db.fiches.get('f1'))!, id: 'f2' });
+  await db.reponses.put({ fiche_id: 'f2', item_id: 'A', valeur: 'OK', sync: 'a_envoyer' });
+  cl.pannes.push((op, cible) => (op === 'upload' && cible.endsWith('p1.jpg')
+    ? { error: { message: 'new row violates row-level security policy', code: '42501' }, status: 403 } : null));
+  const r = await synchroniser(cl as never);
+  expect(r.erreur).toBeUndefined();
+  expect(cl.lignes.reponses_checklist.size).toBe(2);
+  expect(cl.objets.has('fiches/f1/p2.jpg')).toBe(true);
+  expect((await db.photos.get('p1'))?.sync).toBe('rejete');
+  const p1 = await db.photos.get('p1');
+  expect(p1?.donnees?.byteLength).toBe(10); // gardée sur la tablette
+  expect(r.rejetes).toBe(1);
+});
+
+test('fiche validée par l\'admin : ses éléments encore en attente sont mis de côté, pas renvoyés', async () => {
+  await jeu(1); await db.fiches.update('f1', { statut: 'terminee', sync: 'envoye' });
+  const cl = c(); cl.serveurFiches = [{ id: 'f1', statut: 'validee', motif_renvoi: null }];
+  const r = await synchroniser(cl as never);
+  expect(cl.lignes.photos?.size ?? 0).toBe(0);
+  expect((await db.photos.get('p1'))?.sync).toBe('rejete');
+  expect(r.restants).toBe(0);
+});

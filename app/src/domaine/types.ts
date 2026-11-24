@@ -1,4 +1,4 @@
-export type Sync = 'a_envoyer' | 'envoye';
+export type Sync = 'a_envoyer' | 'envoye' | 'rejete';
 export type Statut = 'brouillon' | 'terminee' | 'validee' | 'renvoyee';
 export type Valeur = 'OK' | 'NOK' | 'NA';
 export type Etat = 'Bon' | 'Use' | 'A_remplacer' | 'Absent';
@@ -38,14 +38,14 @@ export interface Fiche {
   arrivee_gps_at?: string | null; gps_motif?: 'indisponible' | 'refuse' | null;
   depart_at?: string | null; depart_lat?: number | null; depart_lng?: number | null;
   identification: Identification; systeme: Systeme; cloture: Cloture; sans_signature: boolean;
-  motif_renvoi?: string | null; sync: Sync;
+  motif_renvoi?: string | null; sync: Sync; rejet?: string;
 }
-export interface Reponse { fiche_id: string; item_id: string; valeur: Valeur; commentaire?: string; sync: Sync }
-export interface EtatModule { fiche_id: string; module: string; etat: Etat; commentaire?: string; sync: Sync }
-export interface Piece { id: string; fiche_id: string; module: string; pn?: string | null; pn_libre?: string | null; quantite: number; sync: Sync; supprimee?: boolean }
+export interface Reponse { fiche_id: string; item_id: string; valeur: Valeur; commentaire?: string; sync: Sync; rejet?: string }
+export interface EtatModule { fiche_id: string; module: string; etat: Etat; commentaire?: string; sync: Sync; rejet?: string }
+export interface Piece { id: string; fiche_id: string; module: string; pn?: string | null; pn_libre?: string | null; quantite: number; sync: Sync; supprimee?: boolean; rejet?: string }
 export interface Photo {
   id: string; fiche_id: string; cible: string; donnees?: ArrayBuffer; type?: string; prise_at: string | null; prise_tablette_at: string;
-  sync: Sync; televersee?: boolean;
+  sync: Sync; televersee?: boolean; rejet?: string;
 }
 
 /** Tout ce qu'il faut pour juger une fiche complète. */

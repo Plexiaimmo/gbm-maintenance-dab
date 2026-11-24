@@ -2,17 +2,25 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { db } from '../local/db';
 import type { Dab, Fiche, Photo } from '../domaine/types';
 
-export type Bilan = { envoyes: number; restants: number; erreur?: 'session' | 'reseau' };
+export type Bilan = { envoyes: number; restants: number; rejetes: number; erreur?: 'session' | 'reseau' };
 type Res = { error: { message: string; code?: string } | null; status?: number };
 
 class ErreurSession extends Error {}
 class ErreurReseau extends Error {}
+/** Refus définitif du serveur (droits, contrainte) : réessayer ne servira à rien. */
+class ErreurRejet extends Error {}
 
 const sansSync = <T extends object>(o: T) => {
   const { sync: _s, supprimee: _x, donnees: _d, type: _t, televersee: _v, ...reste } = o as Record<string, unknown>;
   return reste;
 };
 const empreinte = (o: unknown) => JSON.stringify(o, (_k, v) => (v instanceof ArrayBuffer ? `octets:${v.byteLength}` : v));
+const statutHttp = (r: Res) => Number(r.status ?? (r.error as { status?: number; statusCode?: string } | null)?.status
+  ?? (r.error as { statusCode?: string } | null)?.statusCode ?? 0);
+const estPermanent = (r: Res) => {
+  const st = statutHttp(r);
+  return (st >= 400 && st < 500 && ![401, 408, 429].includes(st)) || /^(22|23|42|P0)/.test(r.error?.code ?? '');
+};
 const estSession = (r: Res) => r.status === 401 || r.error?.code === 'PGRST301' || /jwt|token/i.test(r.error?.message ?? '');
 
 let enCours: Promise<Bilan> | null = null;
@@ -37,6 +45,7 @@ async function executer(client: SupabaseClient): Promise<Bilan> {
     }
     if (r.error) {
       if (estSession(r)) throw new ErreurSession();
+      if (estPermanent(r)) throw new ErreurRejet(r.error.message);
       throw new ErreurReseau(r.error.message);
     }
   }
@@ -51,27 +60,35 @@ async function executer(client: SupabaseClient): Promise<Bilan> {
     envoyes++;
   }
 
+  /** Exécute l'envoi d'un enregistrement ; un refus définitif le met de côté au lieu de bloquer la file. */
+  async function chaque(table: string, cle: unknown, envoi: () => Promise<void>) {
+    try { await envoi(); } catch (e) {
+      if (!(e instanceof ErreurRejet)) throw e;
+      await mettreDeCote(db.table(table), cle, e.message);
+    }
+  }
+
   try {
     await recupererStatuts(client);
 
-    for (const d of await db.dab.where('sync').equals('a_envoyer').toArray() as Dab[]) {
+    for (const d of await db.dab.where('sync').equals('a_envoyer').toArray() as Dab[]) await chaque('dab', d.id, async () => {
       const r = await client.from('dab').insert([sansSync(d)]);
       if (r.error && r.error.code !== '23505') await appel(async () => r);
       await marquer('dab', d.id, d);
-    }
-    for (const f of await db.fiches.where('sync').equals('a_envoyer').toArray() as Fiche[]) {
+    });
+    for (const f of await db.fiches.where('sync').equals('a_envoyer').toArray() as Fiche[]) await chaque('fiches', f.id, async () => {
       await appel(() => client.from('fiches').upsert([sansSync(f)], { onConflict: 'id' }));
       await marquer('fiches', f.id, f);
-    }
-    for (const r of await db.reponses.where('sync').equals('a_envoyer').toArray()) {
+    });
+    for (const r of await db.reponses.where('sync').equals('a_envoyer').toArray()) await chaque('reponses', [r.fiche_id, r.item_id], async () => {
       await appel(() => client.from('reponses_checklist').upsert([sansSync(r)], { onConflict: 'fiche_id,item_id' }));
       await marquer('reponses', [r.fiche_id, r.item_id], r);
-    }
-    for (const e of await db.etats.where('sync').equals('a_envoyer').toArray()) {
+    });
+    for (const e of await db.etats.where('sync').equals('a_envoyer').toArray()) await chaque('etats', [e.fiche_id, e.module], async () => {
       await appel(() => client.from('etats_modules').upsert([sansSync(e)], { onConflict: 'fiche_id,module' }));
       await marquer('etats', [e.fiche_id, e.module], e);
-    }
-    for (const p of await db.pieces.where('sync').equals('a_envoyer').toArray()) {
+    });
+    for (const p of await db.pieces.where('sync').equals('a_envoyer').toArray()) await chaque('pieces', p.id, async () => {
       if (p.supprimee) {
         await appel(() => client.from('pieces_a_prevoir').delete().in('id', [p.id]));
         await db.pieces.delete(p.id); envoyes++;
@@ -79,8 +96,8 @@ async function executer(client: SupabaseClient): Promise<Bilan> {
         await appel(() => client.from('pieces_a_prevoir').upsert([sansSync(p)], { onConflict: 'id' }));
         await marquer('pieces', p.id, p);
       }
-    }
-    for (const p of await db.photos.where('sync').equals('a_envoyer').toArray() as Photo[]) {
+    });
+    for (const p of await db.photos.where('sync').equals('a_envoyer').toArray() as Photo[]) await chaque('photos', p.id, async () => {
       const chemin = `fiches/${p.fiche_id}/${p.id}.${p.type === 'image/png' ? 'png' : 'jpg'}`;
       if (p.donnees) {
         const corps = new Blob([p.donnees], { type: p.type ?? 'image/jpeg' });
@@ -89,10 +106,10 @@ async function executer(client: SupabaseClient): Promise<Bilan> {
       await appel(() => client.from('photos').upsert([{ id: p.id, fiche_id: p.fiche_id, cible: p.cible, storage_path: chemin,
         prise_at: p.prise_at, prise_tablette_at: p.prise_tablette_at }], { onConflict: 'id' }));
       await marquer('photos', p.id, p, { donnees: undefined, televersee: true });
-    }
-    return { envoyes, restants: await restants() };
+    });
+    return { envoyes, restants: await restants(), rejetes: await compter('rejete') };
   } catch (e) {
-    return { envoyes, restants: await restants(), erreur: e instanceof ErreurSession ? 'session' : 'reseau' };
+    return { envoyes, restants: await restants(), rejetes: await compter('rejete'), erreur: e instanceof ErreurSession ? 'session' : 'reseau' };
   }
 }
 
@@ -104,13 +121,27 @@ async function recupererStatuts(client: SupabaseClient) {
   for (const s of (data ?? []) as Pick<Fiche, 'id' | 'statut' | 'motif_renvoi'>[]) {
     const f = await db.fiches.get(s.id);
     if (!f || f.statut === s.statut) continue;
-    if (s.statut === 'validee') await db.fiches.update(s.id, { statut: 'validee', sync: 'envoye' });
+    if (s.statut === 'validee') {
+      await db.fiches.update(s.id, { statut: 'validee', sync: 'envoye' });
+      // une fiche validée n'accepte plus de modifications : ce qui restait à envoyer est mis de côté
+      for (const t of [db.reponses, db.etats, db.pieces, db.photos] as unknown as (typeof db.photos)[])
+        for (const cle of await t.where('fiche_id').equals(s.id).filter((x) => x.sync === 'a_envoyer').primaryKeys())
+          await mettreDeCote(t, cle, 'Fiche déjà validée');
+    }
     else if (s.statut === 'renvoyee' && f.sync === 'envoye') await db.fiches.update(s.id, { statut: 'renvoyee', motif_renvoi: s.motif_renvoi });
   }
 }
 
-export async function restants(): Promise<number> {
+/** Réécrit l'enregistrement entier (une mise à jour partielle de Dexie perd les octets des photos). */
+async function mettreDeCote(t: { get: (k: never) => Promise<unknown>; put: (o: never) => Promise<unknown> }, cle: unknown, motif: string) {
+  const rec = await t.get(cle as never) as Record<string, unknown> | undefined;
+  if (rec) await t.put({ ...rec, sync: 'rejete', rejet: motif } as never);
+}
+
+async function compter(etat: 'a_envoyer' | 'rejete'): Promise<number> {
   const n = await Promise.all([db.dab, db.fiches, db.reponses, db.etats, db.pieces, db.photos]
-    .map((t) => t.where('sync').equals('a_envoyer').count()));
+    .map((t) => (t as typeof db.photos).where('sync').equals(etat).count()));
   return n.reduce((a, b) => a + b, 0);
 }
+export const restants = () => compter('a_envoyer');
+export const rejetes = () => compter('rejete');

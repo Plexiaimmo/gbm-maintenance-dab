@@ -1,4 +1,8 @@
-export function EtatEnvoi({ attente, enLigne, erreur, lancer, reconnecter }: { attente: number; enLigne: boolean; erreur?: string; lancer: () => void; reconnecter: () => void }) {
+export function EtatEnvoi(props: { attente: number; refuses: number; enLigne: boolean; erreur?: string; lancer: () => void; reconnecter: () => void }) {
+  return <>{props.refuses > 0 && <p className="etat-envoi hors">{props.refuses} élément{props.refuses > 1 ? 's' : ''} refusé{props.refuses > 1 ? 's' : ''} par le serveur — gardé{props.refuses > 1 ? 's' : ''} sur la tablette. Prévenez Yousri.</p>}<Bandeau {...props} /></>;
+}
+
+function Bandeau({ attente, enLigne, erreur, lancer, reconnecter }: { attente: number; enLigne: boolean; erreur?: string; lancer: () => void; reconnecter: () => void }) {
   if (!enLigne) return <p className="etat-envoi hors">Pas de réseau — vos saisies sont gardées sur la tablette ({attente} en attente)</p>;
   if (erreur === 'session') return (
     <p className="etat-envoi hors">Reconnectez-vous pour envoyer les {attente} éléments en attente. Rien n'est perdu.

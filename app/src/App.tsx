@@ -61,7 +61,7 @@ export default function App() {
           : <button className="petit" onClick={() => setEcran({ nom: 'suivi' })}>Suivi</button>)}
         <button className="petit" onClick={() => void deconnecter()}>Déconnexion</button>
       </header>
-      {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} enLigne={synchro.enLigne} erreur={!session ? 'session' : synchro.dernier?.erreur} lancer={synchro.lancer} reconnecter={() => setReconnexion(true)} />}
+      {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} refuses={synchro.refuses} enLigne={synchro.enLigne} erreur={!session ? 'session' : synchro.dernier?.erreur} lancer={synchro.lancer} reconnecter={() => setReconnexion(true)} />}
       {message && ecran.nom === 'liste' && <p className="page info">{message}</p>}
       {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => setEcran({ nom: 'detail', ficheId })}
         exporter={async () => {
