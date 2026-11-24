@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
-import { useSession } from './local/session';
+import { deconnecter, useSession } from './local/session';
 import { chargerReferentiel } from './local/referentiel';
 import { db } from './local/db';
 import { Connexion } from './ecrans/Connexion';
@@ -17,11 +17,13 @@ import { chargerExport } from './admin/donnees';
 type Ecran = { nom: 'suivi' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' } | { nom: 'nouveau' } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
 
 export default function App() {
-  const { session, pret } = useSession();
+  const { session, utilisateur, pret } = useSession();
   const [message, setMessage] = useState('');
   const [ecran, setEcran] = useState<Ecran>({ nom: 'liste' });
   const [role, setRole] = useState<string | null>(() => localStorage.getItem('role'));
   const synchro = useSynchro(!!session);
+  const [reconnexion, setReconnexion] = useState(false);
+  useEffect(() => { if (session) setReconnexion(false); }, [session]);
 
   useEffect(() => {
     if (!session) return;
@@ -40,8 +42,8 @@ export default function App() {
   }, [session]);
 
   if (!pret) return <p className="page">Chargement…</p>;
-  if (!session) return <Connexion />;
-  const moi = session.user.id;
+  if (!utilisateur || reconnexion) return <Connexion />;
+  const moi = utilisateur.id;
 
   async function ouvrirDab(dabId: string) {
     const enCours = (await db.fiches.where('dab_id').equals(dabId).toArray())
@@ -57,9 +59,9 @@ export default function App() {
         {role && role !== 'consultant' && (ecran.nom === 'suivi' || ecran.nom === 'detail'
           ? role === 'admin' && <button className="petit" onClick={() => setEcran({ nom: 'liste' })}>Mode terrain</button>
           : <button className="petit" onClick={() => setEcran({ nom: 'suivi' })}>Suivi</button>)}
-        <button className="petit" onClick={() => { localStorage.removeItem('role'); void supabase.auth.signOut(); }}>Déconnexion</button>
+        <button className="petit" onClick={() => void deconnecter()}>Déconnexion</button>
       </header>
-      {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} enLigne={synchro.enLigne} erreur={synchro.dernier?.erreur} lancer={synchro.lancer} />}
+      {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} enLigne={synchro.enLigne} erreur={!session ? 'session' : synchro.dernier?.erreur} lancer={synchro.lancer} reconnecter={() => setReconnexion(true)} />}
       {message && ecran.nom === 'liste' && <p className="page info">{message}</p>}
       {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => setEcran({ nom: 'detail', ficheId })}
         exporter={async () => {
