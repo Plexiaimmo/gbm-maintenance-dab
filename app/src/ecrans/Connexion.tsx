@@ -17,7 +17,7 @@ export function Connexion() {
 
   return (
     <form className="page connexion" onSubmit={envoyer}>
-      <h1>GBM — Relevé DAB</h1>
+      <h1>Connexion au relevé DAB</h1>
       <label>Adresse e-mail<input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
       <label>Mot de passe<input type="password" autoComplete="current-password" value={mdp} onChange={(e) => setMdp(e.target.value)} required /></label>
       {erreur && <p className="erreur">{erreur}</p>}

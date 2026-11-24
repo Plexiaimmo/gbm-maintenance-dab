@@ -16,8 +16,8 @@ with sync_playwright() as p:
     photo = str(Path(__file__).with_name("photo_test.jpg"))
     ctx.set_offline(True); pg.evaluate("window.dispatchEvent(new Event('offline'))")
     for cible in ["plaque"]:
-        pg.set_input_files("input[type=file]", photo); pg.wait_for_selector("img.vignette")
-    pg.click("nav.onglets >> text=5. Clôture")
+        pg.set_input_files("input[type=file]", photo); pg.wait_for_selector("img.tuile-image")
+    pg.click(".rail >> text=Clôture")
     for i in range(2):
         pg.locator("input[type=file]").nth(i).set_input_files(photo)
     pg.wait_for_timeout(1500)

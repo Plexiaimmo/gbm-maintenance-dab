@@ -30,11 +30,12 @@ export function Signature({ ficheId }: { ficheId: string }) {
 
   return (
     <div className="signature">
+      <p className="champ-libelle">Signature du gestionnaire</p>
       {existante && <p className="ok">✓ Signature enregistrée{!vide && ' — validez pour la remplacer'}</p>}
       <canvas ref={toile} className="toile-signature" />
-      <div className="ligne">
-        <button type="button" onClick={() => { pad.current?.clear(); setVide(true); }}>Effacer</button>
-        <button type="button" className="principal" disabled={vide} onClick={valider}>Valider la signature</button>
+      <div className="segments">
+        <button type="button" className="segment" onClick={() => { pad.current?.clear(); setVide(true); }}>Effacer</button>
+        <button type="button" className="segment action" disabled={vide} onClick={valider}>Valider la signature</button>
       </div>
     </div>
   );

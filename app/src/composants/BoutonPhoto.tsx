@@ -28,11 +28,13 @@ export function BoutonPhoto({ ficheId, cible, libelle = 'Prendre la photo', onAj
   }
 
   return (
-    <div className="photo">
+    <div className={`tuile-photo ${photo ? 'faite' : 'a-faire'}`}>
       <input ref={entree} type="file" accept="image/*" capture="environment" hidden onChange={(e) => choisi(e.target.files?.[0])} />
-      {photo && (url ? <img src={url} alt="" className="vignette" /> : <span className="ok">✓ Photo envoyée</span>)}
-      <button type="button" disabled={encours} onClick={() => entree.current?.click()}>
-        📷 {encours ? 'Enregistrement…' : photo ? 'Reprendre la photo' : libelle}
+      <button type="button" className="tuile-bouton" disabled={encours} onClick={() => entree.current?.click()}>
+        {photo
+          ? (url ? <img src={url} alt="" className="tuile-image" /> : <span className="tuile-icone" aria-hidden>✓</span>)
+          : <svg className="tuile-icone" viewBox="0 0 24 24" aria-hidden><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" strokeWidth="1.8" /></svg>}
+        <span className="tuile-texte">{encours ? 'Enregistrement…' : photo ? (url ? 'Reprendre la photo' : 'Photo envoyée — reprendre') : libelle}</span>
       </button>
       {erreur && <p className="erreur">{erreur}</p>}
     </div>

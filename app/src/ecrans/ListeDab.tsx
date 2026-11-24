@@ -27,26 +27,29 @@ export function ListeDab({ ouvrir, nouveau }: { ouvrir: (dabId: string) => void;
 
   return (
     <div className="page">
-      <h1>DAB Wincor</h1>
-      <input placeholder="Rechercher : code, agence, banque, n° de série" value={texte} onChange={(e) => setTexte(e.target.value)} />
-      <div className="ligne choix">
+      <h1>Quel DAB ?</h1>
+      <input className="recherche" type="search" placeholder="Code, agence, banque ou n° de série" value={texte} onChange={(e) => setTexte(e.target.value)}
+        enterKeyHint="search" autoCorrect="off" spellCheck={false} />
+      <div className="segments">
         {['', 'Brazzaville', 'Pointe-Noire'].map((v) => (
-          <button key={v} className={ville === v ? 'actif' : ''} onClick={() => setVille(v)}>{v || 'Toutes les villes'}</button>
+          <button key={v} className={`segment ${ville === v ? 'actif' : ''}`} onClick={() => setVille(v)}>{v || 'Toutes les villes'}</button>
         ))}
       </div>
-      <p className="discret">{lignes.length} DAB</p>
+      <p className="discret">{lignes.length} DAB{texte || ville ? ' trouvés' : ''}</p>
       <ul className="liste">
         {lignes.map(({ d, agence, banque, f }) => (
           <li key={d.id}>
-            <button className="carte" onClick={() => ouvrir(d.id)}>
-              <strong>{d.code}</strong> <span className="discret">{banque} · {agence || 'agence ?'} · {d.ville}</span>
-              <span className="discret">{d.modele}{d.origine === 'nouveau_a_verifier' ? ' · nouveau, à vérifier' : ''}</span>
-              {f && <span className={`pastille ${f.statut}`}>{LIBELLE[f.statut]}</span>}
+            <button className={`carte-dab ${f ? f.statut : ''}`} onClick={() => ouvrir(d.id)}>
+              <span className="carte-code">{d.code}</span>
+              <span className="carte-lieu">{agence || d.agence_saisie || 'Agence non renseignée'}, {d.ville}</span>
+              <span className="carte-detail">{banque}{banque && d.modele ? ', ' : ''}{d.modele}{d.origine === 'nouveau_a_verifier' ? ' (nouveau, à vérifier)' : ''}</span>
+              <span className={`statut ${f ? f.statut : 'vide'}`}>{f ? LIBELLE[f.statut] : 'À visiter'}</span>
             </button>
           </li>
         ))}
       </ul>
-      <button onClick={nouveau}>➕ DAB absent de la liste</button>
+      {lignes.length === 0 && <p className="bandeau-info">Aucun DAB ne correspond. Vérifiez l'orthographe ou ajoutez-le ci-dessous.</p>}
+      <button className="secondaire large" onClick={nouveau}>+ Ajouter un DAB absent de la liste</button>
     </div>
   );
 }
