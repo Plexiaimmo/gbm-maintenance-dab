@@ -50,3 +50,10 @@ def test_sql_idempotent():
 def test_compte():
     r = preparer(FIX)
     assert r.compte == {"Brazzaville": 2, "Pointe-Noire": 1}
+
+
+def test_relance_ne_casse_rien():
+    r = preparer(FIX)
+    assert "id = excluded.id" not in r.sql  # l'identifiant d'un DAB déjà lié à des fiches ne change jamais
+    assert "numero_serie = coalesce(excluded.numero_serie, dab.numero_serie)" in r.sql  # un SN relevé n'est pas effacé
+    assert "lat = coalesce(excluded.lat, sites.lat)" in r.sql  # un GPS validé n'est pas effacé

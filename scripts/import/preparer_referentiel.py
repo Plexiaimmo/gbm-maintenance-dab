@@ -73,10 +73,12 @@ def _num(v):
         return None
 
 
-def _upsert(table: str, cols: list[str], rows: list[list], conflit: str) -> str:
+def _upsert(table: str, cols: list[str], rows: list[list], conflit: str, garder: tuple[str, ...] = ()) -> str:
+    """garder : colonnes dont la valeur existante est conservée si la nouvelle est vide."""
     if not rows:
         return ""
-    maj = ", ".join(f"{c} = excluded.{c}" for c in cols if c != conflit)
+    maj = ", ".join(f"{c} = coalesce(excluded.{c}, {table}.{c})" if c in garder else f"{c} = excluded.{c}"
+                    for c in cols if c not in (conflit, "id"))
     valeurs = ",\n".join("(" + ", ".join(_q(v) for v in r) + ")" for r in rows)
     return f"insert into {table} ({', '.join(cols)}) values\n{valeurs}\non conflict ({conflit}) do update set {maj};\n"
 
@@ -93,7 +95,8 @@ def preparer(dossier: Path) -> Rapport:
     banques, sites, dabs = {}, {}, {}
     for i, l in enumerate(_lire(Path(dossier) / "dab.csv"), start=2):
         ville = normaliser_ville(l.get("ville"))
-        if ville not in ("Pointe-Noire", "Brazzaville") or not est_wincor(l.get("marque"), l.get("modele")):
+        marque_inconnue = not (l.get("marque") or "").strip() and not (l.get("modele") or "").strip()
+        if ville not in ("Pointe-Noire", "Brazzaville") or not (est_wincor(l.get("marque"), l.get("modele")) or marque_inconnue):
             continue
         code = (l.get("code_dab") or "").strip()
         if not code:
@@ -112,12 +115,15 @@ def preparer(dossier: Path) -> Rapport:
         elif lat is not None and sites[cle][4] is None:
             sites[cle][4], sites[cle][5] = lat, lng
         sn = normaliser_sn(l.get("numero_serie"))
+        if marque_inconnue:
+            r.anomalies.append(f"{code} : marque inconnue (inclus, à vérifier sur place)")
         if sn is None:
             r.anomalies.append(f"{code} : numéro de série absent (à relever sur le terrain)")
         if lat is None:
             r.anomalies.append(f"{code} : pas de GPS (sera fourni par la première visite)")
         d = {"id": _id("dab", code), "code_dab": code, "site_id": sites[cle][0],
-             "marque": (l.get("marque") or "").strip(), "modele": (l.get("modele") or "").strip(),
+             "marque": (l.get("marque") or "").strip() or None,
+             "modele": "Marque à vérifier sur place" if marque_inconnue else (l.get("modele") or "").strip(),
              "numero_serie": sn, "ville": ville}
         dabs[code] = d
     r.dab = list(dabs.values())
@@ -137,10 +143,10 @@ def preparer(dossier: Path) -> Rapport:
 
     r.sql = "".join([
         _upsert("banques", ["id", "code", "nom"], list(banques.values()), "code"),
-        _upsert("sites", ["id", "banque_id", "nom", "ville", "lat", "lng"], list(sites.values()), "id"),
+        _upsert("sites", ["id", "banque_id", "nom", "ville", "lat", "lng"], list(sites.values()), "id", garder=("lat", "lng")),
         _upsert("dab", ["id", "code", "site_id", "marque", "modele", "numero_serie", "ville"],
                 [[d["id"], d["code_dab"], d["site_id"], d["marque"], d["modele"], d["numero_serie"], d["ville"]]
-                 for d in r.dab], "code"),
+                 for d in r.dab], "code", garder=("numero_serie", "site_id")),
         _upsert("checklist_items", list(r.checklist[0].keys()) if r.checklist else [],
                 [list(c.values()) for c in r.checklist], "id"),
         _upsert("articles", ["pn", "designation"], articles, "pn"),
