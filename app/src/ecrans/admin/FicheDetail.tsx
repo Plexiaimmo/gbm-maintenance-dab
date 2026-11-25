@@ -21,7 +21,7 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
   return (
     <div className="page large detail">
       {agrandie && <div className="loupe" onClick={() => setAgrandie(undefined)}><img src={agrandie} alt="" /></div>}
-      <div className="entete"><button className="petit" onClick={retour}>← Suivi</button><h1>{dab.code} — {dab.sites?.nom ?? dab.agence_saisie}</h1></div>
+      <div className="entete"><button className="petit" onClick={retour}>← Suivi</button><h1>{dab.code} — {dab.sites?.nom ?? dab.agence_saisie}</h1>{dab.origine === 'nouveau_a_verifier' && <span className="statut brouillon">Nouveau DAB, à vérifier</span>}</div>
       <p>Statut : <b>{({ brouillon: 'En cours', terminee: 'À valider', validee: 'Validée', renvoyee: 'Renvoyée' } as Record<string, string>)[f.statut]}</b> · Arrivée {new Date(f.arrivee_at).toLocaleString('fr-FR')} · {duree !== null ? `${duree} min sur place` : 'non terminée'}
         {f.sans_signature && <b className="alerte"> · sans signature</b>}</p>
       {d.signal?.raisons?.length > 0 && <p className={d.signal.douteux ? 'erreur' : 'info'}>{d.signal.douteux ? '⚠ ' : ''}{d.signal.raisons.join(' · ')}</p>}
@@ -30,6 +30,10 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
       <table className="tableau"><tbody>
         <tr><td>N° de série</td><td>{dab.numero_serie ?? '—'}</td><td><b>{f.identification.numero_serie}</b></td></tr>
         <tr><td>Modèle</td><td>{dab.modele ?? '—'}</td><td><b>{f.identification.modele}</b></td></tr>
+        <tr><td>Marque</td><td>{dab.marque ?? '—'}</td><td><b>{f.identification.marque}</b></td></tr>
+        {f.identification.code_affiche && <tr><td>Code affiché (à vérifier)</td><td>{dab.code}</td><td><b>{f.identification.code_affiche}</b></td></tr>}
+        {f.identification.banque && <tr><td>Banque (à vérifier)</td><td>{dab.agence_saisie?.split(' — ')[0] ?? '—'}</td><td><b>{f.identification.banque}</b></td></tr>}
+        {f.identification.agence && <tr><td>Agence (à vérifier)</td><td>{dab.sites?.nom ?? dab.agence_saisie?.split(' — ')[1] ?? '—'}</td><td><b>{f.identification.agence}</b></td></tr>}
         <tr><td>GPS</td><td>{dab.sites?.lat ? `${dab.sites.lat}, ${dab.sites.lng}` : '—'}</td><td><b>{f.arrivee_lat ? `${f.arrivee_lat.toFixed(5)}, ${f.arrivee_lng.toFixed(5)} (±${Math.round(f.arrivee_precision ?? 0)} m)` : f.gps_motif}</b></td></tr>
       </tbody></table>
       <Vignette cible="plaque" /> {f.identification.corrections && <p>Corrections : {f.identification.corrections}</p>}
@@ -61,7 +65,7 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
 
       {admin && f.statut === 'terminee' && (
         <div className="actions">
-          <button className="principal" onClick={() => agir(() => valider(ficheId, true))}>Valider et mettre à jour le DAB (SN, modèle, GPS)</button>
+          <button className="principal" onClick={() => agir(() => valider(ficheId, true))}>Valider et mettre à jour le DAB (SN, modèle, marque, GPS)</button>
           <button onClick={() => agir(() => valider(ficheId, false))}>Valider sans modifier le DAB</button>
           <label>Motif du renvoi au consultant<textarea value={motif} onChange={(e) => setMotif(e.target.value)} /></label>
           <button disabled={!motif.trim()} onClick={() => agir(() => renvoyer(ficheId, motif))}>Renvoyer la fiche</button>

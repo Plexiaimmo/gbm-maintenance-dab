@@ -35,3 +35,12 @@ test('récapitulatif de fin de fiche : points pas OK, pièces avec leur nom, pho
     photos: 2, numeroSerie: '53100412',
   });
 });
+
+test('ordre de la liste : en cours et à reprendre d\'abord, puis à visiter par agence, les relevés à part', async () => {
+  const { rangerTournee } = await import('./tournee');
+  const l = (code: string, agence: string, statut: string) => ({ code, agence, statut: statut as never });
+  const r = rangerTournee([l('D5', 'Nova', 'terminee'), l('D1', 'Poto-Poto', 'a_visiter'), l('D2', 'Bacongo', 'a_visiter'),
+    l('D3', 'Zz', 'renvoyee'), l('D4', 'Aa', 'brouillon'), l('D6', 'Bacongo', 'validee')]);
+  expect(r.aTraiter.map((x) => x.code)).toEqual(['D3', 'D4', 'D2', 'D1']);
+  expect(r.releves.map((x) => x.code)).toEqual(['D6', 'D5']);
+});

@@ -273,3 +273,11 @@ input::placeholder, textarea::placeholder { color: var(--discret); }
   .chiffre b { font-size: 3.6rem; } .chiffre span { font-size: 1.3rem; }
 }
 .pouce-terminer.pret { flex-direction: row; gap: 10px; }
+/* Recherche avec bouton d'ajout à portée de main ; liste des déjà relevés repliée */
+.recherche-ligne { display: flex; gap: 12px; align-items: center; }
+.recherche-ligne .recherche-zone { flex: 1; min-width: 0; }
+.bouton-nouveau { min-height: 64px; background: var(--action); color: #fff; padding: 0 22px; flex: none; }
+.villes.banques { margin-top: -6px; }
+.aucun { background: var(--surface); border-radius: var(--rayon-bloc); padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+.aucun p { margin: 0; }
+.voir-releves { width: 100%; justify-content: flex-start; background: transparent; color: var(--encre-2); margin-bottom: 10px; }

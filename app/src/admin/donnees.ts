@@ -19,7 +19,7 @@ export async function chargerSuivi() {
     const s = sites.find((y) => y.id === x.site_id);
     return { id: x.id!, code: x.code!, ville: x.ville, site_id: x.site_id,
       banque: banques.find((b) => b.id === s?.banque_id)?.code ?? x.agence_saisie?.split(' — ')[0] ?? '',
-      agence: s?.nom ?? x.agence_saisie?.split(' — ')[1] ?? '' };
+      agence: s?.nom ?? x.agence_saisie?.split(' — ')[1] ?? '', nouveau: x.origine === 'nouveau_a_verifier' };
   });
   return { dabs: d, fiches, signaux };
 }
@@ -66,7 +66,7 @@ export async function chargerExport() {
   return {
     fiches: (completes as any[]).map((f) => {
       const d = dabs.find((x) => x.id === f.dab_id); const s = signaux.find((x) => x.fiche_id === f.id);
-      return { ...f, dab_code: d?.code ?? '', banque: d?.banque ?? '', agence: d?.agence ?? '', ville: d?.ville ?? null,
+      return { ...f, dab_code: d?.code ?? '', banque: d?.banque ?? '', agence: d?.agence ?? '', ville: d?.ville ?? null, nouveau: !!d?.nouveau,
         douteux: !!s?.douteux, raisons: s?.raisons ?? [], sans_signature: !!f.sans_signature };
     }),
     reponses: (reponses as any[]).map((r) => ({ ...r, libelle: (items as any[]).find((i) => i.id === r.item_id)?.libelle ?? r.item_id })),

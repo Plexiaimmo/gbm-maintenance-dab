@@ -44,7 +44,7 @@ export function Suivi({ ouvrir, exporter }: { ouvrir: (ficheId: string) => void;
         <thead><tr><th>DAB</th><th>Banque · agence</th><th>Ville</th><th>Statut</th><th>Visite</th><th>Signaux</th></tr></thead>
         <tbody>{lignes.map((l) => (
           <tr key={l.dab.id} className={l.fiche ? 'cliquable' : ''} onClick={() => l.fiche && ouvrir(l.fiche.id)}>
-            <td><b>{l.dab.code}</b></td><td>{l.dab.banque} · {l.dab.agence}</td><td>{l.dab.ville}</td>
+            <td><b>{l.dab.code}</b>{l.dab.nouveau && <> <span className="statut brouillon">Nouveau DAB</span></>}</td><td>{l.dab.banque} · {l.dab.agence}</td><td>{l.dab.ville}</td>
             <td>{l.fiche ? STATUTS[l.fiche.statut] : 'Non visité'}{l.nbFiches > 1 ? ` (${l.nbFiches} visites)` : ''}</td>
             <td>{l.fiche ? new Date(l.fiche.arrivee_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}</td>
             <td>{l.signal?.douteux && <span className="alerte">⚠ {l.signal.raisons.filter((x) => !x.startsWith('GPS non comparable')).join(' · ')}</span>}

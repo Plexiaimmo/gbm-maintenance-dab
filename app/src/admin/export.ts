@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 type Obj = Record<string, unknown>;
 export interface ExportDonnees {
   fiches: (Obj & { id: string; dab_code: string; banque: string; agence: string; ville: string | null; statut: string;
-    arrivee_at: string; depart_at?: string | null; douteux: boolean; raisons: string[]; sans_signature: boolean;
+    arrivee_at: string; depart_at?: string | null; nouveau?: boolean; douteux: boolean; raisons: string[]; sans_signature: boolean;
     identification: Obj; systeme: Obj; cloture: Obj })[];
   reponses: { fiche_id: string; item_id: string; libelle: string; valeur: string; commentaire?: string | null }[];
   etats: { fiche_id: string; module: string; etat: string; commentaire?: string | null }[];
@@ -13,16 +13,22 @@ export interface ExportDonnees {
 
 const date = (s?: string | null) => (s ? new Date(s) : null);
 
+const CORRECTIONS: [string, string][] = [['marque', 'Marque'], ['code_affiche', 'Code affiché'], ['banque', 'Banque'], ['agence', 'Agence']];
+/** Corrections de la liste relevées sur place, en une phrase lisible ; vide si la liste est juste. */
+export const correctionsProposees = (id: Obj) =>
+  CORRECTIONS.filter(([k]) => String(id[k] ?? '').trim()).map(([k, l]) => `${l} : ${String(id[k]).trim()}`).join(' ; ');
+
 export function construireClasseur(d: ExportDonnees): XLSX.WorkBook {
   const code = (id: string) => d.fiches.find((f) => f.id === id)?.dab_code ?? id;
   const feuille = (lignes: Obj[]) => XLSX.utils.json_to_sheet(lignes, { cellDates: true });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, feuille(d.fiches.map((f) => ({
-    DAB: f.dab_code, Banque: f.banque, Agence: f.agence, Ville: f.ville, Statut: f.statut,
+    DAB: f.dab_code, 'Nouveau DAB': f.nouveau ? 'OUI' : '', Banque: f.banque, Agence: f.agence, Ville: f.ville, Statut: f.statut,
     Douteux: f.douteux ? 'OUI' : '', Raisons: f.raisons.join(' · '), 'Sans signature': f.sans_signature ? 'OUI' : '',
     'Arrivée': date(f.arrivee_at), 'Départ': date(f.depart_at),
     'Durée (min)': f.depart_at ? Math.round((Date.parse(f.depart_at) - Date.parse(f.arrivee_at)) / 60000) : null,
     'SN relevé': f.identification.numero_serie ?? '', 'Modèle relevé': f.identification.modele ?? '',
+    'Corrections proposées': correctionsProposees(f.identification), 'Autre remarque': f.identification.corrections ?? '',
   }))), 'Fiches');
   XLSX.utils.book_append_sheet(wb, feuille(d.reponses.map((r) => ({ DAB: code(r.fiche_id), Point: r.item_id, 'Libellé': r.libelle,
     'Réponse': r.valeur, Commentaire: r.commentaire ?? '' }))), 'Preventif');

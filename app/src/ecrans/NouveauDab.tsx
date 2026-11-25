@@ -3,9 +3,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../local/db';
 import { normaliserSN } from '../domaine/sn';
 
-export function NouveauDab({ consultantId, cree, annuler }: { consultantId: string; cree: (id: string) => void; annuler: () => void }) {
+const MARQUES = ['Wincor Nixdorf', 'Diebold Nixdorf', 'NCR', 'Hyosung', 'GRG', 'Autre'];
+
+export function NouveauDab({ codeInitial, consultantId, cree, annuler }: { codeInitial?: string; consultantId: string; cree: (id: string) => void; annuler: () => void }) {
   const banques = useLiveQuery(() => db.banques.toArray(), []) ?? [];
-  const [v, setV] = useState({ code: '', banque: '', agence: '', ville: 'Brazzaville', modele: '', sn: '' });
+  const [v, setV] = useState({ code: (codeInitial ?? '').toUpperCase(), banque: '', agence: '', ville: 'Brazzaville', marque: 'Wincor Nixdorf', modele: '', sn: '' });
   const [erreur, setErreur] = useState('');
   const maj = (k: keyof typeof v) => (e: { target: { value: string } }) => setV({ ...v, [k]: e.target.value });
 
@@ -14,7 +16,7 @@ export function NouveauDab({ consultantId, cree, annuler }: { consultantId: stri
     const code = v.code.trim().toUpperCase();
     if (await db.dab.where('code').equals(code).count()) { setErreur('Ce code existe déjà dans la liste.'); return; }
     const id = crypto.randomUUID();
-    await db.dab.put({ id, code, site_id: null, marque: 'Wincor Nixdorf', modele: v.modele.trim(), numero_serie: normaliserSN(v.sn),
+    await db.dab.put({ id, code, site_id: null, marque: v.marque, modele: v.modele.trim(), numero_serie: normaliserSN(v.sn),
       ville: v.ville, origine: 'nouveau_a_verifier', cree_par: consultantId, agence_saisie: `${v.banque} — ${v.agence.trim()}`, sync: 'a_envoyer' });
     cree(id);
   }
@@ -29,6 +31,7 @@ export function NouveauDab({ consultantId, cree, annuler }: { consultantId: stri
       </select></label>
       <label>Agence<input value={v.agence} onChange={maj('agence')} required /></label>
       <label>Ville<select value={v.ville} onChange={maj('ville')}><option>Brazzaville</option><option>Pointe-Noire</option></select></label>
+      <label>Marque<select value={v.marque} onChange={maj('marque')}>{MARQUES.map((m) => <option key={m}>{m}</option>)}</select></label>
       <label>Modèle<input value={v.modele} onChange={maj('modele')} placeholder="ProCash 2050xe" required /></label>
       <label>Numéro de série (si lisible)<input value={v.sn} onChange={maj('sn')} /></label>
       {erreur && <p className="erreur">{erreur}</p>}

@@ -1,4 +1,4 @@
-export interface DabSuivi { id: string; code: string; ville: string | null; site_id: string | null; banque: string; agence: string }
+export interface DabSuivi { id: string; code: string; ville: string | null; site_id: string | null; banque: string; agence: string; nouveau?: boolean }
 export interface FicheSuivi { id: string; dab_id: string; statut: string; arrivee_at: string; [k: string]: unknown }
 export interface Signal { fiche_id: string; douteux: boolean; raisons: string[]; sans_signature: boolean }
 export interface LigneSuivi { dab: DabSuivi; fiche?: FicheSuivi; signal?: Signal; nbFiches: number }

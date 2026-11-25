@@ -5,6 +5,8 @@ const TRACES = {
   plus: 'M12 5v14M5 12h14',
   retour: 'm15 6-6 6 6 6',
   chevron: 'm9 6 6 6-6 6',
+  chevronBas: 'm6 9 6 6 6-6',
+  chevronHaut: 'm6 15 6-6 6 6',
   recherche: 'M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14zM20 20l-3.5-3.5',
   menu: 'M12 6h.01M12 12h.01M12 18h.01',
   envoi: 'M4 12l16-8-6 16-2-6z',

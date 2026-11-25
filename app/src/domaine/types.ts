@@ -22,7 +22,11 @@ export interface ChecklistItem {
 export interface Article { pn: string; designation: string | null }
 export interface Parametre { cle: string; valeur: string }
 
-export interface Identification { modele?: string; numero_serie?: string; corrections?: string }
+export interface Identification {
+  modele?: string; numero_serie?: string; corrections?: string;
+  /** Corrections de la liste relevées sur place ; vide = la liste est juste. */
+  marque?: string; code_affiche?: string; banque?: string; agence?: string;
+}
 export interface Systeme {
   version_windows?: string; logiciel?: string; logiciel_version?: string; heure_correcte?: boolean;
   espace_disque_go?: string; test_interne?: string; antiskimming?: boolean;

@@ -8,7 +8,7 @@ insert into banques (id, code, nom) values ('10000000-0000-0000-0000-00000000000
 insert into sites (id, banque_id, nom, ville, lat, lng) values ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','Agence test','Brazzaville',null,null);
 insert into dab (id, code, site_id, marque, modele, numero_serie, ville, origine) values ('30000000-0000-0000-0000-000000000001','TST-001','20000000-0000-0000-0000-000000000001','Wincor','ProCash','ANCIEN','Brazzaville','reference');
 insert into fiches (id, dab_id, consultant_id, statut, arrivee_at, arrivee_lat, arrivee_lng, identification) values
- ('40000000-0000-0000-0000-0000000000a1','30000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','terminee', now(), -4.26, 15.24, '{"numero_serie":" ab 12 ","modele":"ProCash 2050xe"}'),
+ ('40000000-0000-0000-0000-0000000000a1','30000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','terminee', now(), -4.26, 15.24, '{"numero_serie":" ab 12 ","modele":"ProCash 2050xe","marque":"Diebold Nixdorf"}'),
  ('40000000-0000-0000-0000-0000000000a2','30000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','terminee', now(), -4.0, 15.0, '{"numero_serie":"AUTRE","modele":"X"}'),
  ('40000000-0000-0000-0000-0000000000a3','30000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','terminee', now(), null, null, '{}');
 set local role authenticated;
@@ -24,6 +24,7 @@ begin
   perform valider_fiche('40000000-0000-0000-0000-0000000000a1', true);
   select * into d from dab where id='30000000-0000-0000-0000-000000000001';
   if d.numero_serie <> 'AB12' or d.modele <> 'ProCash 2050xe' then raise exception 'ECHEC corrections DAB: % %', d.numero_serie, d.modele; end if;
+  if d.marque <> 'Diebold Nixdorf' then raise exception 'ECHEC marque non appliquée: %', d.marque; end if;
   select * into s from sites where id='20000000-0000-0000-0000-000000000001';
   if s.lat <> -4.26 then raise exception 'ECHEC GPS site: %', s.lat; end if;
   select statut into st from fiches where id='40000000-0000-0000-0000-0000000000a1';

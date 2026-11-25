@@ -15,7 +15,7 @@ import { Suivi } from './ecrans/admin/Suivi';
 import { FicheDetail } from './ecrans/admin/FicheDetail';
 import { chargerExport } from './admin/donnees';
 
-type Ecran = { nom: 'suivi' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' } | { nom: 'nouveau' } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
+type Ecran = { nom: 'suivi' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' } | { nom: 'nouveau'; code?: string } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
 
 export default function App() {
   const { session, utilisateur, pret } = useSession();
@@ -101,8 +101,8 @@ export default function App() {
           XLSX.writeFile(construireClasseur(d), `releve-wincor-${new Date().toISOString().slice(0, 10)}.xlsx`);
         }} />}
       {ecran.nom === 'detail' && <FicheDetail ficheId={ecran.ficheId} admin={role === 'admin'} retour={() => setEcran({ nom: 'suivi' })} />}
-      {ecran.nom === 'liste' && <ListeDab ouvrir={ouvrirDab} nouveau={() => setEcran({ nom: 'nouveau' })} nom={nom} actions={actionsAccueil} />}
-      {ecran.nom === 'nouveau' && <NouveauDab consultantId={moi} cree={(dabId) => setEcran({ nom: 'arrivee', dabId })} annuler={() => setEcran({ nom: 'liste' })} />}
+      {ecran.nom === 'liste' && <ListeDab ouvrir={ouvrirDab} nouveau={(code) => setEcran({ nom: 'nouveau', code })} nom={nom} actions={actionsAccueil} />}
+      {ecran.nom === 'nouveau' && <NouveauDab codeInitial={ecran.code} consultantId={moi} cree={(dabId) => setEcran({ nom: 'arrivee', dabId })} annuler={() => setEcran({ nom: 'liste' })} />}
       {ecran.nom === 'arrivee' && <Arrivee dabId={ecran.dabId} consultantId={moi} ouverte={(ficheId) => setEcran({ nom: 'fiche', ficheId })} annuler={() => setEcran({ nom: 'liste' })} />}
       {ecran.nom === 'fiche' && <Fiche ficheId={ecran.ficheId} retour={() => setEcran({ nom: 'liste' })} apresTerminer={() => { setEcran({ nom: 'liste' }); void synchro.lancer(); }} />}
     </>

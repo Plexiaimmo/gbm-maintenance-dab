@@ -30,3 +30,12 @@ export function recapitulatif(fc: FicheComplete, items: Pick<ChecklistItem, 'id'
     numeroSerie: fc.fiche.identification.numero_serie ?? '',
   };
 }
+
+const PRIORITE: Record<StatutDab, number> = { renvoyee: 0, brouillon: 1, a_visiter: 2, terminee: 3, validee: 3 };
+
+/** Range la liste pour la tournée : à reprendre, en cours, puis à visiter (par agence) ; les DAB déjà relevés à part. */
+export function rangerTournee<T extends { code: string; agence: string; statut: StatutDab }>(lignes: T[]) {
+  const tri = [...lignes].sort((a, b) => PRIORITE[a.statut] - PRIORITE[b.statut]
+    || a.agence.localeCompare(b.agence, 'fr') || a.code.localeCompare(b.code, 'fr'));
+  return { aTraiter: tri.filter((l) => PRIORITE[l.statut] < 3), releves: tri.filter((l) => PRIORITE[l.statut] === 3) };
+}

@@ -32,3 +32,11 @@ test('dates en vraies dates Excel et durée en minutes', () => {
   const cellule = Object.entries(ws).find(([k, v]) => /^[A-Z]+2$/.test(k) && (v as XLSX.CellObject).t === 'd');
   expect(cellule).toBeDefined();
 });
+
+test('onglet Fiches : DAB nouveau signalé et corrections proposées sur place', () => {
+  const e: ExportDonnees = { ...d, fiches: [{ ...fiche('f3', 'NEW-1'), nouveau: true,
+    identification: { numero_serie: 'SN', marque: 'NCR', code_affiche: 'BGFI-07', banque: 'BGFI', agence: 'Poto-Poto' } }] };
+  const ligne = XLSX.utils.sheet_to_json<Record<string, unknown>>(construireClasseur(e).Sheets.Fiches)[0];
+  expect(ligne['Nouveau DAB']).toBe('OUI');
+  expect(ligne['Corrections proposées']).toBe('Marque : NCR ; Code affiché : BGFI-07 ; Banque : BGFI ; Agence : Poto-Poto');
+});
