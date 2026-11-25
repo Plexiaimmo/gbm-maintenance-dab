@@ -286,3 +286,12 @@ input::placeholder, textarea::placeholder { color: var(--discret); }
 .code-calcule small { color: var(--nuit-texte); font-size: .85rem; }
 .code-calcule strong { font-family: var(--titre); font-size: 1.7rem; font-weight: 600; letter-spacing: .01em; word-break: break-all; }
 .code-calcule.vide strong { font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 500; color: var(--nuit-texte); }
+/* Logos : banque dans une pastille blanche ronde, GBM en tête */
+.logo-banque { display: inline-grid; place-items: center; flex: none; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 2px var(--trait); overflow: hidden; }
+.logo-banque img { width: 86%; height: 86%; object-fit: contain; }
+.logo-sigle { font-size: .72rem; font-weight: 700; color: #3b434d; }
+.villes .logo-banque, .pastille-choix .logo-banque { margin-left: -12px; }
+.logo-gbm { display: block; width: auto; }
+.barre-titre { display: flex; align-items: center; gap: 12px; }
+.connexion .logo-gbm { margin: 0 auto 24px; max-width: 100%; }
+.tournee-haut + .tournee-haut { margin-top: -8px; }

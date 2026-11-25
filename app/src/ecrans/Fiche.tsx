@@ -13,6 +13,7 @@ import { Manques } from './Manques';
 import { allerVers, useEcranAllume } from '../lib/tactile';
 import { recapitulatif } from '../domaine/tournee';
 import { Icone } from '../composants/Icone';
+import { LogoBanque } from '../composants/Logos';
 
 const PARTIES = ['Identification', 'Préventif', 'Mécanique', 'Système', 'Clôture'];
 
@@ -28,6 +29,7 @@ export function Fiche({ ficheId, retour, apresTerminer }: { ficheId: string; ret
   const dab = useLiveQuery(async () => (fc ? db.dab.get(fc.fiche.dab_id) : undefined), [fc?.fiche.dab_id]);
   const site = useLiveQuery(async () => (dab?.site_id ? db.sites.get(dab.site_id) : undefined), [dab?.site_id]);
   const articles = useLiveQuery(() => db.articles.toArray(), []) ?? [];
+  const banque = useLiveQuery(async () => (site?.banque_id ? db.banques.get(site.banque_id) : undefined), [site?.banque_id]);
   useEcranAllume(!!fc && fc.fiche.statut !== 'validee');
   if (!fc) return <p className="page">Chargement…</p>;
 
@@ -56,6 +58,7 @@ export function Fiche({ ficheId, retour, apresTerminer }: { ficheId: string; ret
       <header className="fiche-entete">
         <div className="fiche-haut">
           <button className="rond" onClick={retour} aria-label="Retour à la liste"><Icone nom="retour" /></button>
+          <LogoBanque code={banque?.code ?? dab?.agence_saisie?.split(' — ')[0]} taille={48} />
           <div className="fiche-titre">
             <strong>{dab?.code}</strong>
             <span>{[site?.nom ?? dab?.agence_saisie, dab?.ville].filter(Boolean).join(', ')}{dab?.modele ? `. ${dab.modele}` : ''}</span>

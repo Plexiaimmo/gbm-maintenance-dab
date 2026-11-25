@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../local/db';
 import { avancementTournee, rangerTournee, statutDab, type StatutDab } from '../domaine/tournee';
 import { Icone } from '../composants/Icone';
+import { LogoBanque, LogoGbm } from '../composants/Logos';
 
 const LIBELLE: Record<StatutDab, string> = { brouillon: 'En cours', terminee: 'Terminée', validee: 'Validée', renvoyee: 'À reprendre', a_visiter: '' };
 const VILLES = ['Brazzaville', 'Pointe-Noire'];
@@ -37,9 +38,7 @@ export function ListeDab({ ouvrir, nouveau, nom, actions }: { ouvrir: (dabId: st
   const ligne = ({ d, agence, banque: bq, statut }: (typeof lignes)[number]) => (
     <li key={d.id}>
       <button className={`ligne-dab ${statut}`} onClick={() => ouvrir(d.id)}>
-        <span className={`badge-banque ${statut}`} aria-hidden="true">
-          {statut === 'terminee' || statut === 'validee' ? <Icone nom="coche" /> : bq || '?'}
-        </span>
+        <LogoBanque code={bq} />
         <span className="ligne-texte">
           <strong>{d.code}</strong>
           <span>{[agence || 'Agence non renseignée', d.ville].filter(Boolean).join(', ')}. {d.modele ?? ''}{d.origine === 'nouveau_a_verifier' ? ' (nouveau, à vérifier)' : ''}</span>
@@ -53,11 +52,14 @@ export function ListeDab({ ouvrir, nouveau, nom, actions }: { ouvrir: (dabId: st
     <>
       <section className="tournee">
         <div className="tournee-haut">
+          <LogoGbm hauteur={36} />
+          <div className="tournee-actions">{actions}</div>
+        </div>
+        <div className="tournee-haut">
           <div className="salut">
             {nom && <span className="avatar" aria-hidden="true">{initiales(nom)}</span>}
             <div><small>{aujourdhui()}</small><strong>{nom ? `Bonjour ${nom.split(/\s+/)[0]}` : 'Bonjour'}</strong></div>
           </div>
-          <div className="tournee-actions">{actions}</div>
         </div>
         <div className="avancement">
           <small>Tournée Wincor, Brazzaville et Pointe-Noire</small>
@@ -92,7 +94,7 @@ export function ListeDab({ ouvrir, nouveau, nom, actions }: { ouvrir: (dabId: st
           <div className="villes banques" role="radiogroup" aria-label="Banque">
             {['', ...codesBanques].map((b) => (
               <button key={b} role="radio" aria-checked={banque === b} className={banque === b ? 'actif' : ''} onClick={() => setBanque(b)}>
-                {b || 'Toutes les banques'}{b && <small>{parBanque(b)}</small>}
+                {b && <LogoBanque code={b} taille={30} />}{b || 'Toutes les banques'}{b && <small>{parBanque(b)}</small>}
               </button>
             ))}
           </div>

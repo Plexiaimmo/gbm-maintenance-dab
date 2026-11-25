@@ -10,6 +10,7 @@ import { Arrivee } from './ecrans/Arrivee';
 import { Fiche } from './ecrans/Fiche';
 import { EtatEnvoi, PastilleEnvoi } from './composants/EtatEnvoi';
 import { Icone } from './composants/Icone';
+import { LogoGbm } from './composants/Logos';
 import { useSynchro } from './sync/useSynchro';
 import { Suivi } from './ecrans/admin/Suivi';
 import { FicheDetail } from './ecrans/admin/FicheDetail';
@@ -83,7 +84,7 @@ export default function App() {
     <>
       {!terrain && (
         <header className="barre">
-          <span>GBM Relevé DAB</span>
+          <span className="barre-titre"><LogoGbm hauteur={26} />Relevé DAB</span>
           <div className="actions-barre">
             {versSuivi && (ecran.nom === 'suivi' || ecran.nom === 'detail'
               ? role === 'admin' && <button className="petit" onClick={() => setEcran({ nom: 'liste' })}>Mode terrain</button>

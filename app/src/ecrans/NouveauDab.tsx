@@ -5,6 +5,7 @@ import { normaliserSN } from '../domaine/sn';
 import { codeDab, normaliserAgence } from '../domaine/codeDab';
 import { Champ, Choix } from './parties/Commun';
 import { vibrer } from '../lib/tactile';
+import { LogoBanque } from '../composants/Logos';
 
 const MARQUES = ['Wincor Nixdorf', 'Diebold Nixdorf', 'NCR', 'Hyosung', 'GRG'];
 const MODELES = ['ProCash 280', 'ProCash 2050xe', 'ProCash 2100xe', 'ProCash 2250xe', 'ProCash 285', 'CINEO C4060'];
@@ -49,8 +50,9 @@ export function NouveauDab({ codeInitial, consultantId, cree, annuler }: { codeI
     cree(id);
   }
 
-  const pastille = (actif: boolean, texte: string, choisir: () => void) => (
-    <button key={texte} type="button" className={actif ? 'pastille-choix actif' : 'pastille-choix'} onClick={() => { vibrer(); setErreur(''); choisir(); }}>{texte}</button>
+  const pastille = (actif: boolean, texte: string, choisir: () => void, logo?: string) => (
+    <button key={texte} type="button" className={actif ? 'pastille-choix actif' : 'pastille-choix'} onClick={() => { vibrer(); setErreur(''); choisir(); }}>
+      {logo && <LogoBanque code={logo} taille={30} />}{texte}</button>
   );
 
   return (
@@ -61,7 +63,7 @@ export function NouveauDab({ codeInitial, consultantId, cree, annuler }: { codeI
       <div className="champ">
         <p className="champ-libelle">Banque</p>
         <div className="pastilles" role="radiogroup" aria-label="Banque">
-          {banques.filter((b) => b.code !== 'TEST').map((b) => pastille(banque === b.code, b.code, () => { setBanque(b.code); setAgence(''); }))}
+          {banques.filter((b) => b.code !== 'TEST').map((b) => pastille(banque === b.code, b.code, () => { setBanque(b.code); setAgence(''); }, b.code))}
           {pastille(banque === AUTRE, 'Autre banque', () => { setBanque(AUTRE); setAgence(''); })}
         </div>
         {banque === AUTRE && <Champ libelle="Sigle de la banque" aide="2 à 8 lettres, par exemple LCB" clavier="sn" valeur={banqueAutre} enregistrer={setBanqueAutre} />}
