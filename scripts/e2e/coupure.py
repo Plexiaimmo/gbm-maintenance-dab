@@ -28,7 +28,9 @@ with sync_playwright() as p:
     ctx.set_offline(True)
     pg2.goto(sys.argv[1]); pg2.wait_for_selector(".etat-envoi")
     print("après réouverture hors ligne :", pg2.inner_text(".etat-envoi"))
+    assert pg2.query_selector(".fiche"), "la réouverture doit ramener sur la fiche en cours"
     ctx.set_offline(False); pg2.evaluate("window.dispatchEvent(new Event('online'))")
+    pg2.click("[aria-label='Retour à la liste']")
     pg2.wait_for_selector("text=Tout est envoyé", timeout=20000)
     print("après retour du réseau :", pg2.inner_text(".pastille-envoi"))
     print("photos téléversées :", [(k, v) for k, v in c.objets.items()])

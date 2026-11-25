@@ -3,7 +3,7 @@ import { MODULES } from '../../domaine/types';
 import { majPartie } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { vibrer } from '../../lib/tactile';
-import { Champ, OuiNon } from './Commun';
+import { Champ, ChoixOuAutre, OuiNon } from './Commun';
 
 const WINDOWS = ['Windows 7', 'Windows 10', 'Windows 10 IoT LTSC', 'Windows 11 IoT'];
 const LOGICIELS = ['ProTopas', 'ProCash/NDC', 'ProCash/DDC', 'ProFlex4'];
@@ -35,11 +35,11 @@ export function Systeme({ fiche }: { fiche: Fiche }) {
   const maj = (p: Partial<Fiche['systeme']>) => majPartie(fiche.id, 'systeme', p);
   return (
     <section>
-      <Champ libelle="Version de Windows" valeur={s.version_windows} suggestions={WINDOWS} enregistrer={(v) => maj({ version_windows: v })} />
-      <Champ libelle="Logiciel applicatif" valeur={s.logiciel} suggestions={LOGICIELS} enregistrer={(v) => maj({ logiciel: v })} />
+      <ChoixOuAutre libelle="Version de Windows" options={WINDOWS} valeur={s.version_windows} enregistrer={(v) => maj({ version_windows: v })} />
+      <ChoixOuAutre libelle="Logiciel applicatif" options={LOGICIELS} valeur={s.logiciel} enregistrer={(v) => maj({ logiciel: v })} />
       <Champ libelle="Version du logiciel" clavier="nombre" valeur={s.logiciel_version} enregistrer={(v) => maj({ logiciel_version: v })} />
       <OuiNon libelle="Date et heure système correctes ?" valeur={s.heure_correcte} enregistrer={(v) => maj({ heure_correcte: v })} />
-      <Champ libelle="Espace disque libre" clavier="nombre" suffixe="Go" valeur={s.espace_disque_go} enregistrer={(v) => maj({ espace_disque_go: v })} />
+      <Champ libelle="Espace disque libre" clavier="nombre" chiffres suffixe="Go" valeur={s.espace_disque_go} enregistrer={(v) => maj({ espace_disque_go: v })} />
       <h2>Journal d'erreurs</h2>
       <BoutonPhoto ficheId={fiche.id} cible="journal" libelle="Photographier l'écran du journal" />
       <TestInterne valeur={s.test_interne} enregistrer={(v) => maj({ test_interne: v })} />

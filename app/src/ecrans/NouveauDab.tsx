@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../local/db';
 import { normaliserSN } from '../domaine/sn';
 import { codeDab, normaliserAgence } from '../domaine/codeDab';
-import { Champ, Choix } from './parties/Commun';
+import { Champ, Choix, ChoixOuAutre } from './parties/Commun';
 import { vibrer } from '../lib/tactile';
 import { LogoBanque } from '../composants/Logos';
 
@@ -88,8 +88,8 @@ export function NouveauDab({ codeInitial, consultantId, cree, annuler }: { codeI
         <strong>{code || 'Choisissez la banque, la ville et l’agence'}</strong>
       </div>
 
-      <Champ libelle="Marque" valeur={v.marque} suggestions={MARQUES} enregistrer={(x) => setV({ ...v, marque: x })} />
-      <Champ libelle="Modèle" valeur={v.modele} suggestions={MODELES} enregistrer={(x) => setV({ ...v, modele: x })} />
+      <ChoixOuAutre libelle="Marque" options={MARQUES} valeur={v.marque} enregistrer={(x) => setV({ ...v, marque: x })} />
+      <ChoixOuAutre libelle="Modèle" options={MODELES} valeur={v.modele} enregistrer={(x) => setV({ ...v, modele: x })} />
       <Champ libelle="Numéro de série" aide="si la plaque est lisible" clavier="sn" valeur={v.sn} enregistrer={(x) => setV({ ...v, sn: x })} />
       <Champ libelle="Code de la banque" aide="facultatif : tel qu’il est collé sur le DAB, s’il y en a un" clavier="sn" valeur={v.codeBanque}
         enregistrer={(x) => setV({ ...v, codeBanque: x })} />

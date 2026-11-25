@@ -4,7 +4,7 @@ import { Icone } from '../../composants/Icone';
 import { commenter, repondre } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { allerVers, vibrer } from '../../lib/tactile';
-import { Champ } from './Commun';
+import { Champ, ChoixMultiple } from './Commun';
 
 const DEFAUTS = ['Sale', 'Usé', 'Cassé', 'Mal fixé', 'Ne fonctionne pas', 'Absent'];
 
@@ -51,8 +51,9 @@ export function Preventif({ ficheId, items, reponses }: { ficheId: string; items
                     <button type="button" className={`rep-na ${r?.valeur === 'NA' ? 'actif' : ''}`} onClick={() => choisir(it, 'NA')}>Non applicable</button>
                   )}
                   {r && r.valeur !== 'NA' && (r.valeur === 'NOK' || it.commentaire_requis) && (
-                    <Champ libelle={r.valeur === 'NOK' ? 'Quel problème ?' : 'Commentaire'} multi valeur={r.commentaire}
-                      phrases={r.valeur === 'NOK' ? DEFAUTS : undefined} enregistrer={(v) => commenter(ficheId, it.id, v)} />
+                    r.valeur === 'NOK'
+                      ? <ChoixMultiple libelle="Quel problème ?" options={DEFAUTS} valeur={r.commentaire} enregistrer={(v) => commenter(ficheId, it.id, v)} />
+                      : <Champ libelle="Commentaire" multi valeur={r.commentaire} enregistrer={(v) => commenter(ficheId, it.id, v)} />
                   )}
                   {r && r.valeur !== 'NA' && (r.valeur === 'NOK' || it.photo_requise) && <BoutonPhoto ficheId={ficheId} cible={`item:${it.id}`} />}
                 </article>

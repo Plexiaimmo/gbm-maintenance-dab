@@ -22,7 +22,7 @@ with sync_playwright() as p:
     pg.click("text=TEST-BZV-01"); pg.click("button:has-text('Je suis arrivé')"); pg.wait_for_selector("text=Arrivée enregistrée")
     petits["identification"] = pg.evaluate(AUDIT); pg.screenshot(path=OUT / "u2-identification.png")
     pg.click(".rail >> text=Préventif"); pg.click("#item-CHK-P101 .rep.ok"); pg.wait_for_timeout(600)
-    pg.click("#item-CHK-P102 .rep.nok"); pg.wait_for_timeout(300); pg.click("#item-CHK-P102 >> text=+ Usé")
+    pg.click("#item-CHK-P102 .rep.nok"); pg.wait_for_timeout(300); pg.click("#item-CHK-P102 >> button:has-text('Usé')")
     pg.locator("#item-CHK-P102").scroll_into_view_if_needed(); pg.evaluate("window.scrollBy(0, -150)")
     petits["preventif"] = pg.evaluate(AUDIT); pg.screenshot(path=OUT / "u3-preventif.png")
     pg.click(".rail >> text=Mécanique"); pg.click("[id='module-Distributeur'] >> text=Usé"); pg.wait_for_timeout(300)

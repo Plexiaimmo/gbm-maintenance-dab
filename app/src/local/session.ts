@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
+import { oublierNavigation } from './navigation';
 
 const CLE = 'utilisateur';
 export type Utilisateur = { id: string };
 
 export const memoriserUtilisateur = (id: string) => localStorage.setItem(CLE, id);
-export const oublierUtilisateur = () => { localStorage.removeItem(CLE); localStorage.removeItem('role'); localStorage.removeItem('nom'); };
+export const oublierUtilisateur = () => { localStorage.removeItem(CLE); localStorage.removeItem('role'); localStorage.removeItem('nom'); oublierNavigation(); };
 
 /** L'utilisateur de la tablette : celui de la session, ou le dernier connecté si la session n'a pas pu être
  *  rafraîchie (hors ligne). Seule une déconnexion volontaire l'oublie. */

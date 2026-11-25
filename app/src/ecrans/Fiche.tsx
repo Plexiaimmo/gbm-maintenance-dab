@@ -13,12 +13,13 @@ import { Manques } from './Manques';
 import { allerVers, useEcranAllume } from '../lib/tactile';
 import { recapitulatif } from '../domaine/tournee';
 import { Icone } from '../composants/Icone';
+import { lirePartie, memoriserPartie } from '../local/navigation';
 import { LogoBanque } from '../composants/Logos';
 
 const PARTIES = ['Identification', 'Préventif', 'Mécanique', 'Système', 'Clôture'];
 
 export function Fiche({ ficheId, retour, apresTerminer }: { ficheId: string; retour: () => void; apresTerminer: () => void }) {
-  const [partie, setPartie] = useState(1);
+  const [partie, setPartie] = useState(() => lirePartie(ficheId));
   const [manquesAffiches, setManquesAffiches] = useState<Manque[] | null>(null);
   const [encours, setEncours] = useState(false);
   const items = useLiveQuery(async () => (await db.checklist.orderBy('ordre').toArray())
@@ -45,14 +46,14 @@ export function Fiche({ ficheId, retour, apresTerminer }: { ficheId: string; ret
   }
 
   function allerA(m: Manque) {
-    setManquesAffiches(null); setPartie(m.partie);
+    setManquesAffiches(null); setPartie(m.partie); memoriserPartie(ficheId, m.partie);
     const cible = m.cle.includes(':') ? m.cle.split(':').slice(1).join(':') : '';
     setTimeout(() => allerVers(m.partie === 2 ? `item-${cible}` : `module-${cible}`), 80);
   }
 
   if (manquesAffiches) return <Manques manques={manquesAffiches} allerA={allerA} fermer={() => setManquesAffiches(null)} />;
 
-  const aller = (p: number) => { setPartie(p); window.scrollTo(0, 0); };
+  const aller = (p: number) => { setPartie(p); memoriserPartie(ficheId, p); window.scrollTo(0, 0); };
   return (
     <div className="fiche">
       <header className="fiche-entete">

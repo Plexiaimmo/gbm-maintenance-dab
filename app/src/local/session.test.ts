@@ -29,3 +29,11 @@ test('déconnexion : ne dépend pas de window.confirm (bloqué dans certains nav
   expect(utilisateurCourant(null)).toBeNull();
   expect(recharge).toBe(true);
 });
+
+test("déconnexion : l'écran mémorisé est oublié, le suivant ne tombe pas sur la fiche d'un autre", async () => {
+  const { memoriserEcran, memoriserPartie, lireEcran, lirePartie } = await import('./navigation');
+  memoriserEcran({ nom: 'fiche', ficheId: 'F9' }); memoriserPartie('F9', 3);
+  oublierUtilisateur();
+  expect(lireEcran()).toEqual({ nom: 'liste' });
+  expect(lirePartie('F9')).toBe(1);
+});

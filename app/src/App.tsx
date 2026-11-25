@@ -15,13 +15,14 @@ import { useSynchro } from './sync/useSynchro';
 import { Suivi } from './ecrans/admin/Suivi';
 import { FicheDetail } from './ecrans/admin/FicheDetail';
 import { chargerExport } from './admin/donnees';
+import { lireEcran, memoriserEcran } from './local/navigation';
 
-type Ecran = { nom: 'suivi' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' } | { nom: 'nouveau'; code?: string } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
+import type { EcranMemo as Ecran } from './local/navigation';
 
 export default function App() {
   const { session, utilisateur, pret } = useSession();
   const [message, setMessage] = useState('');
-  const [ecran, setEcran] = useState<Ecran>({ nom: 'liste' });
+  const [ecran, setEcran] = useState<Ecran>(lireEcran);
   const [role, setRole] = useState<string | null>(() => localStorage.getItem('role'));
   const synchro = useSynchro(!!session);
   const [reconnexion, setReconnexion] = useState(false);
@@ -29,6 +30,12 @@ export default function App() {
   const [menu, setMenu] = useState(false);
   const [nom, setNom] = useState<string>(() => localStorage.getItem('nom') ?? '');
   useEffect(() => { if (session) setReconnexion(false); }, [session]);
+  // L'écran courant survit à un rechargement ; une fiche disparue (supprimée) ramène à la liste.
+  useEffect(() => { memoriserEcran(ecran); }, [ecran]);
+  useEffect(() => {
+    if (ecran.nom !== 'fiche') return;
+    void db.fiches.get(ecran.ficheId).then((f) => { if (!f) setEcran({ nom: 'liste' }); });
+  }, [ecran]);
 
   useEffect(() => {
     if (!session) return;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { chargerDetail, renvoyer, valider } from '../../admin/donnees';
-
+import { tonEtat } from '../../domaine/etatPiece';
 const ETATS: Record<string, string> = { Bon: 'Bon', Use: 'Usé', A_remplacer: 'À remplacer', Absent: 'Absent' };
 
 export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retour: () => void; admin: boolean }) {
@@ -47,7 +47,7 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
 
       <h2>3. État mécanique</h2>
       <table className="tableau"><tbody>{d.etats.map((e: any) => (
-        <tr key={e.module}><td>{e.module}</td><td><b>{ETATS[e.etat]}</b></td><td>{e.commentaire}
+        <tr key={e.module} className={tonEtat(e.etat)}><td>{e.module}</td><td><b>{ETATS[e.etat]}</b></td><td>{e.commentaire}
           {d.pieces.filter((p: any) => p.module === e.module).map((p: any) => <div key={p.id}>→ {p.quantite} × {p.pn ?? p.pn_libre}</div>)}</td>
           <td><Vignette cible={`module:${e.module}`} /></td></tr>
       ))}</tbody></table>
