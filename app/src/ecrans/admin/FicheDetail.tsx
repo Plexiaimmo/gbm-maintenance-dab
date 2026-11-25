@@ -30,6 +30,7 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
       <table className="tableau"><tbody>
         <tr><td>N° de série</td><td>{dab.numero_serie ?? '—'}</td><td><b>{f.identification.numero_serie}</b></td></tr>
         <tr><td>Modèle</td><td>{dab.modele ?? '—'}</td><td><b>{f.identification.modele}</b></td></tr>
+        {dab.code_banque && <tr><td>Code de la banque</td><td colSpan={2}><b>{dab.code_banque}</b></td></tr>}
         <tr><td>Marque</td><td>{dab.marque ?? '—'}</td><td><b>{f.identification.marque}</b></td></tr>
         {f.identification.code_affiche && <tr><td>Code affiché (à vérifier)</td><td>{dab.code}</td><td><b>{f.identification.code_affiche}</b></td></tr>}
         {f.identification.banque && <tr><td>Banque (à vérifier)</td><td>{dab.agence_saisie?.split(' — ')[0] ?? '—'}</td><td><b>{f.identification.banque}</b></td></tr>}

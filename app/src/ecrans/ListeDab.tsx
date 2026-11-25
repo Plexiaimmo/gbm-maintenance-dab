@@ -28,7 +28,7 @@ export function ListeDab({ ouvrir, nouveau, nom, actions }: { ouvrir: (dabId: st
       const b = banques.find((x) => x.id === s?.banque_id);
       return { d, agence: s?.nom ?? d.agence_saisie ?? '', banque: b?.code ?? '', statut: statutDab(d.id, fiches) };
     }).filter((l) => (!ville || l.d.ville === ville) && (!banque || l.banque === banque)
-      && (!t || [l.d.code, l.agence, l.banque, l.d.numero_serie ?? ''].some((v) => v.toLowerCase().includes(t))))
+      && (!t || [l.d.code, l.agence, l.banque, l.d.numero_serie ?? '', l.d.code_banque ?? ''].some((v) => v.toLowerCase().includes(t))))
       .map((l) => ({ ...l, code: l.d.code }));
   }, [dabs, sites, banques, fiches, texte, ville, banque]);
   const { aTraiter, releves } = rangerTournee(lignes);

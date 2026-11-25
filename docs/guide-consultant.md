@@ -16,4 +16,4 @@
 **Les photos se prennent avec le bouton 📷 de l'application, sur place.** L'heure et la position de chaque visite sont contrôlées.
 
 ## Le DAB n'est pas dans la liste
-Tapez son code dans la recherche. S'il n'apparaît pas, touchez « Ajouter … comme nouveau DAB » (ou le bouton « + Nouveau DAB » à côté de la recherche), remplissez le court formulaire, puis faites la fiche normalement. Le DAB est marqué « nouveau, à vérifier ».
+Tapez dans la recherche ce qui est collé sur le DAB. S'il n'apparaît pas, touchez « Ajouter … comme nouveau DAB » (ou « + Nouveau DAB » à côté de la recherche). Touchez la banque, la ville et l'agence (ou « Autre agence » et tapez son nom) : **le code est calculé tout seul** (BANQUE-VILLE-AGENCE-N, par exemple BGFI-BZV-POTO-POTO-1), il ne se tape pas. Le code collé par la banque, s'il y en a un, va dans « Code de la banque ». Puis la marque, le modèle et le numéro de série, et « Créer et commencer ». Le DAB est marqué « nouveau, à vérifier ».
