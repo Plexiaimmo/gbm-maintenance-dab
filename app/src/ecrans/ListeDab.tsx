@@ -71,7 +71,7 @@ export function ListeDab({ ouvrir, nouveau, nom, actions }: { ouvrir: (dabId: st
           <ul className="liste">
             {lignes.map(({ d, agence, banque, statut }) => (
               <li key={d.id}>
-                <button className="ligne-dab" onClick={() => ouvrir(d.id)}>
+                <button className={`ligne-dab ${statut}`} onClick={() => ouvrir(d.id)}>
                   <span className={`badge-banque ${statut}`} aria-hidden="true">
                     {statut === 'terminee' || statut === 'validee' ? <Icone nom="coche" /> : banque || '?'}
                   </span>
