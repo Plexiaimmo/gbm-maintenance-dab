@@ -35,6 +35,8 @@ function AjoutPiece({ ficheId, module }: { ficheId: string; module: string }) {
 }
 
 export function Mecanique({ ficheId, etats, pieces }: { ficheId: string; etats: EtatModule[]; pieces: Piece[] }) {
+  const articles = useLiveQuery(() => db.articles.toArray(), []) ?? [];
+  const nomPiece = (p: Piece) => { const a = p.pn ? articles.find((x) => x.pn === p.pn) : undefined; return a?.designation ? `${a.designation} (${a.pn})` : p.pn ?? p.pn_libre; };
   return (
     <section>
       {MODULES.map((m) => {
@@ -51,7 +53,7 @@ export function Mecanique({ ficheId, etats, pieces }: { ficheId: string; etats: 
               <BoutonPhoto ficheId={ficheId} cible={`module:${m}`} />
               <p className="champ-libelle">Pièces à prévoir</p>
               <ul className="pieces">{pieces.filter((p) => p.module === m && !p.supprimee).map((p) => (
-                <li key={p.id}><span><b>{p.quantite} ×</b> {p.pn ?? p.pn_libre}</span><button type="button" className="retirer" onClick={() => supprimerPiece(p.id)}>Retirer</button></li>
+                <li key={p.id}><span><b>{p.quantite} ×</b> {nomPiece(p)}</span><button type="button" className="retirer" onClick={() => supprimerPiece(p.id)}>Retirer</button></li>
               ))}</ul>
               <AjoutPiece ficheId={ficheId} module={m} />
             </>}

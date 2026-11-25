@@ -8,7 +8,8 @@ import { ListeDab } from './ecrans/ListeDab';
 import { NouveauDab } from './ecrans/NouveauDab';
 import { Arrivee } from './ecrans/Arrivee';
 import { Fiche } from './ecrans/Fiche';
-import { EtatEnvoi } from './composants/EtatEnvoi';
+import { EtatEnvoi, PastilleEnvoi } from './composants/EtatEnvoi';
+import { Icone } from './composants/Icone';
 import { useSynchro } from './sync/useSynchro';
 import { Suivi } from './ecrans/admin/Suivi';
 import { FicheDetail } from './ecrans/admin/FicheDetail';
@@ -24,12 +25,15 @@ export default function App() {
   const synchro = useSynchro(!!session);
   const [reconnexion, setReconnexion] = useState(false);
   const [quitter, setQuitter] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [nom, setNom] = useState<string>(() => localStorage.getItem('nom') ?? '');
   useEffect(() => { if (session) setReconnexion(false); }, [session]);
 
   useEffect(() => {
     if (!session) return;
-    supabase.from('profils').select('role').eq('id', session.user.id).single().then(({ data }) => {
+    supabase.from('profils').select('role, nom').eq('id', session.user.id).single().then(({ data }) => {
       if (!data?.role) return;
+      if (data.nom) { localStorage.setItem('nom', data.nom); setNom(data.nom); }
       localStorage.setItem('role', data.role); setRole(data.role);
       if (data.role !== 'consultant') setEcran((e) => (e.nom === 'liste' ? { nom: 'suivi' } : e));
     });
@@ -53,33 +57,51 @@ export default function App() {
     setEcran(enCours ? { nom: 'fiche', ficheId: enCours.id } : { nom: 'arrivee', dabId });
   }
 
+  const terrain = ecran.nom === 'liste' || ecran.nom === 'fiche';
+  const versSuivi = role && role !== 'consultant';
+  const confirmation = quitter && (
+    <div className="page confirmer-sortie" role="alertdialog" aria-label="Confirmer la déconnexion">
+      <p>Se déconnecter ? Les saisies non envoyées restent sur la tablette, mais il faudra du réseau pour se reconnecter.</p>
+      <div className="actions">
+        <button onClick={() => void deconnecter()}>Oui, me déconnecter</button>
+        <button className="secondaire" onClick={() => setQuitter(false)}>Annuler</button>
+      </div>
+    </div>
+  );
+  const actionsAccueil = <>
+    <PastilleEnvoi attente={synchro.attente} enLigne={synchro.enLigne} lancer={synchro.lancer} />
+    <button className="rond" aria-label="Menu" aria-expanded={menu} onClick={() => setMenu(!menu)}><Icone nom="menu" /></button>
+    {menu && (
+      <div className="menu" role="menu">
+        {versSuivi && <button role="menuitem" onClick={() => { setMenu(false); setEcran({ nom: 'suivi' }); }}>Suivi des fiches</button>}
+        <button role="menuitem" onClick={() => { setMenu(false); setQuitter(true); }}>Déconnexion</button>
+      </div>
+    )}
+  </>;
+
   return (
     <>
-      <header className="barre">
-        <span>GBM Relevé DAB</span>
-        {role && role !== 'consultant' && (ecran.nom === 'suivi' || ecran.nom === 'detail'
-          ? role === 'admin' && <button className="petit" onClick={() => setEcran({ nom: 'liste' })}>Mode terrain</button>
-          : <button className="petit" onClick={() => setEcran({ nom: 'suivi' })}>Suivi</button>)}
-        <button className="petit" onClick={() => setQuitter(true)}>Déconnexion</button>
-      </header>
-      {quitter && (
-        <div className="page confirmer-sortie" role="alertdialog" aria-label="Confirmer la déconnexion">
-          <p>Se déconnecter ? Les saisies non envoyées restent sur la tablette, mais il faudra du réseau pour se reconnecter.</p>
-          <div className="actions">
-            <button onClick={() => void deconnecter()}>Oui, me déconnecter</button>
-            <button className="secondaire" onClick={() => setQuitter(false)}>Annuler</button>
+      {!terrain && (
+        <header className="barre">
+          <span>GBM Relevé DAB</span>
+          <div className="actions-barre">
+            {versSuivi && (ecran.nom === 'suivi' || ecran.nom === 'detail'
+              ? role === 'admin' && <button className="petit" onClick={() => setEcran({ nom: 'liste' })}>Mode terrain</button>
+              : <button className="petit" onClick={() => setEcran({ nom: 'suivi' })}>Suivi</button>)}
+            <button className="petit" onClick={() => setQuitter(true)}>Déconnexion</button>
           </div>
-        </div>
+        </header>
       )}
+      {confirmation}
       {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} refuses={synchro.refuses} enLigne={synchro.enLigne} erreur={!session ? 'session' : synchro.dernier?.erreur} lancer={synchro.lancer} reconnecter={() => setReconnexion(true)} />}
-      {message && ecran.nom === 'liste' && <p className="page info">{message}</p>}
+      {message.startsWith('Hors ligne') && ecran.nom === 'liste' && <p className="page info">{message}</p>}
       {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => setEcran({ nom: 'detail', ficheId })}
         exporter={async () => {
           const [{ construireClasseur }, XLSX, d] = await Promise.all([import('./admin/export'), import('xlsx'), chargerExport()]);
           XLSX.writeFile(construireClasseur(d), `releve-wincor-${new Date().toISOString().slice(0, 10)}.xlsx`);
         }} />}
       {ecran.nom === 'detail' && <FicheDetail ficheId={ecran.ficheId} admin={role === 'admin'} retour={() => setEcran({ nom: 'suivi' })} />}
-      {ecran.nom === 'liste' && <ListeDab ouvrir={ouvrirDab} nouveau={() => setEcran({ nom: 'nouveau' })} />}
+      {ecran.nom === 'liste' && <ListeDab ouvrir={ouvrirDab} nouveau={() => setEcran({ nom: 'nouveau' })} nom={nom} actions={actionsAccueil} />}
       {ecran.nom === 'nouveau' && <NouveauDab consultantId={moi} cree={(dabId) => setEcran({ nom: 'arrivee', dabId })} annuler={() => setEcran({ nom: 'liste' })} />}
       {ecran.nom === 'arrivee' && <Arrivee dabId={ecran.dabId} consultantId={moi} ouverte={(ficheId) => setEcran({ nom: 'fiche', ficheId })} annuler={() => setEcran({ nom: 'liste' })} />}
       {ecran.nom === 'fiche' && <Fiche ficheId={ecran.ficheId} retour={() => setEcran({ nom: 'liste' })} apresTerminer={() => { setEcran({ nom: 'liste' }); void synchro.lancer(); }} />}

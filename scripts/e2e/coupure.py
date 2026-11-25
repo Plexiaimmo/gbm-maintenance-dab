@@ -18,8 +18,7 @@ with sync_playwright() as p:
     for cible in ["plaque"]:
         pg.set_input_files("input[type=file]", photo); pg.wait_for_selector("img.tuile-image")
     pg.click(".rail >> text=Clôture")
-    for i in range(2):
-        pg.locator("input[type=file]").nth(i).set_input_files(photo)
+    pg.locator("input[type=file]").nth(0).set_input_files(photo)  # ticket test (seule photo de la clôture)
     pg.wait_for_timeout(1500)
     print("bandeau hors ligne :", pg.inner_text(".etat-envoi"))
     pg.reload(wait_until="domcontentloaded") if False else None
@@ -31,7 +30,7 @@ with sync_playwright() as p:
     print("après réouverture hors ligne :", pg2.inner_text(".etat-envoi"))
     ctx.set_offline(False); pg2.evaluate("window.dispatchEvent(new Event('online'))")
     pg2.wait_for_selector("text=Tout est envoyé", timeout=20000)
-    print("après retour du réseau :", pg2.inner_text(".etat-envoi"))
+    print("après retour du réseau :", pg2.inner_text(".pastille-envoi"))
     print("photos téléversées :", [(k, v) for k, v in c.objets.items()])
     print("lignes envoyées :", sorted({t for m, t in c.envois}))
     print("erreurs JS :", err)

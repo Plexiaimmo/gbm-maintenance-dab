@@ -11,9 +11,10 @@ import { Systeme } from './parties/Systeme';
 import { Cloture } from './parties/Cloture';
 import { Manques } from './Manques';
 import { allerVers, useEcranAllume } from '../lib/tactile';
+import { recapitulatif } from '../domaine/tournee';
+import { Icone } from '../composants/Icone';
 
 const PARTIES = ['Identification', 'Préventif', 'Mécanique', 'Système', 'Clôture'];
-const STATUT: Record<string, string> = { brouillon: 'En cours', terminee: 'Terminée', renvoyee: 'À reprendre', validee: 'Validée' };
 
 export function Fiche({ ficheId, retour, apresTerminer }: { ficheId: string; retour: () => void; apresTerminer: () => void }) {
   const [partie, setPartie] = useState(1);
@@ -25,6 +26,8 @@ export function Fiche({ ficheId, retour, apresTerminer }: { ficheId: string; ret
     try { return await chargerFicheComplete(ficheId); } catch { return undefined; }
   }, [ficheId]);
   const dab = useLiveQuery(async () => (fc ? db.dab.get(fc.fiche.dab_id) : undefined), [fc?.fiche.dab_id]);
+  const site = useLiveQuery(async () => (dab?.site_id ? db.sites.get(dab.site_id) : undefined), [dab?.site_id]);
+  const articles = useLiveQuery(() => db.articles.toArray(), []) ?? [];
   useEcranAllume(!!fc && fc.fiche.statut !== 'validee');
   if (!fc) return <p className="page">Chargement…</p>;
 
@@ -50,39 +53,47 @@ export function Fiche({ ficheId, retour, apresTerminer }: { ficheId: string; ret
   const aller = (p: number) => { setPartie(p); window.scrollTo(0, 0); };
   return (
     <div className="fiche">
-      <div className="fiche-entete">
-        <button className="retour" onClick={retour} aria-label="Retour à la liste">‹ Liste</button>
-        <div className="fiche-titre"><strong>{dab?.code}</strong><span>{dab?.modele}</span></div>
-        <span className={`statut ${fc.fiche.statut}`}>{STATUT[fc.fiche.statut]}</span>
-      </div>
+      <header className="fiche-entete">
+        <div className="fiche-haut">
+          <button className="rond" onClick={retour} aria-label="Retour à la liste"><Icone nom="retour" /></button>
+          <div className="fiche-titre">
+            <strong>{dab?.code}</strong>
+            <span>{[site?.nom ?? dab?.agence_saisie, dab?.ville].filter(Boolean).join(', ')}{dab?.modele ? `. ${dab.modele}` : ''}</span>
+          </div>
+          <div className="fiche-compte">
+            {lectureSeule ? <><b className="pret">Validée</b><span>lecture seule</span></>
+              : manques.length ? <><b>{manques.length}</b><span>à faire</span></> : <><b className="pret">Prête</b><span>tout est rempli</span></>}
+          </div>
+        </div>
+        <nav className="rail" aria-label="Parties de la fiche">
+          {PARTIES.map((p, i) => {
+            const reste = parPartie(i + 1);
+            return (
+              <button key={p} className={`rail-etape ${partie === i + 1 ? 'actif' : ''} ${reste ? '' : 'fini'}`} onClick={() => aller(i + 1)}
+                aria-current={partie === i + 1 ? 'step' : undefined}>
+                <span className="rail-nom">{p}</span>
+                <span className="rail-etat">{reste ? `${reste} à faire` : 'Fait'}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </header>
       {fc.fiche.statut === 'renvoyee' && fc.fiche.motif_renvoi && <p className="bandeau-info alerte">À reprendre : {fc.fiche.motif_renvoi}</p>}
-      <nav className="rail" aria-label="Parties de la fiche">
-        {PARTIES.map((p, i) => {
-          const reste = parPartie(i + 1);
-          return (
-            <button key={p} className={`rail-etape ${partie === i + 1 ? 'actif' : ''} ${reste ? '' : 'fini'}`} onClick={() => aller(i + 1)}
-              aria-current={partie === i + 1 ? 'step' : undefined}>
-              <span className="rail-nom">{p}</span>
-              <span className="rail-etat">{reste ? `${reste} à faire` : '✓ Fait'}</span>
-            </button>
-          );
-        })}
-      </nav>
       <fieldset className="fiche-contenu" disabled={lectureSeule}>
         {partie === 1 && <Identification fiche={fc.fiche} dab={dab} />}
         {partie === 2 && <Preventif ficheId={ficheId} items={items} reponses={fc.reponses} />}
         {partie === 3 && <Mecanique ficheId={ficheId} etats={fc.etats} pieces={fc.pieces} />}
         {partie === 4 && <Systeme fiche={fc.fiche} />}
-        {partie === 5 && <Cloture fiche={fc.fiche} />}
+        {partie === 5 && <Cloture fiche={fc.fiche} recap={recapitulatif(fc, items, new Map(articles.map((a) => [a.pn, a.designation ?? a.pn])))} />}
       </fieldset>
       <div className="barre-pouce">
-        <button className="pouce-nav" disabled={partie === 1} onClick={() => aller(partie - 1)}>‹ Précédent</button>
+        <button className="pouce-nav" disabled={partie === 1} onClick={() => aller(partie - 1)}>Précédent</button>
         {!lectureSeule && (
           <button className={`pouce-terminer ${manques.length ? '' : 'pret'}`} disabled={encours} onClick={terminer}>
-            {encours ? 'Vérification…' : manques.length ? <>Terminer<small>{manques.length} à faire</small></> : 'Terminer la fiche'}
+            {encours ? 'Vérification…' : manques.length ? <>Terminer la fiche<small>{manques.length} élément{manques.length > 1 ? 's' : ''} à faire</small></> : <><Icone nom="coche" />Terminer la fiche</>}
           </button>
         )}
-        <button className="pouce-nav" disabled={partie === 5} onClick={() => aller(partie + 1)}>Suivant ›</button>
+        <button className="pouce-nav suivant" disabled={partie === 5} onClick={() => aller(partie + 1)}>Suivant</button>
       </div>
     </div>
   );

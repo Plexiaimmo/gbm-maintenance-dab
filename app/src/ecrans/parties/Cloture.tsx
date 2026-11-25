@@ -3,8 +3,9 @@ import { majPartie } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { Signature } from '../../composants/Signature';
 import { Champ, Choix } from './Commun';
+import type { recapitulatif } from '../../domaine/tournee';
 
-export function Cloture({ fiche }: { fiche: Fiche }) {
+export function Cloture({ fiche, recap }: { fiche: Fiche; recap: ReturnType<typeof recapitulatif> }) {
   const c = fiche.cloture;
   const maj = (p: Partial<Fiche['cloture']>) => majPartie(fiche.id, 'cloture', p);
   return (
@@ -22,6 +23,14 @@ export function Cloture({ fiche }: { fiche: Fiche }) {
         <Champ libelle="Nom du gestionnaire" valeur={c.gestionnaire_nom} enregistrer={(v) => maj({ gestionnaire_nom: v })} />
         <Signature ficheId={fiche.id} />
       </>}
+      <div className="recap">
+        <h2>À vérifier avant d'envoyer</h2>
+        {recap.pasOk.length > 0
+          ? <p className="rouge">{recap.pasOk.length} point{recap.pasOk.length > 1 ? 's' : ''} pas OK : {recap.pasOk.join(', ')}</p>
+          : <p>Aucun point pas OK au préventif</p>}
+        {recap.pieces.length > 0 && <p className="ambre">Pièces à prévoir : {recap.pieces.join(', ')}</p>}
+        <p>{recap.photos} photo{recap.photos > 1 ? 's' : ''}{recap.numeroSerie ? `, n° de série ${recap.numeroSerie}` : ''}</p>
+      </div>
     </section>
   );
 }
