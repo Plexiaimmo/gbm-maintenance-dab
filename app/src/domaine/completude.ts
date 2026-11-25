@@ -3,7 +3,6 @@ import { MODULES, type ChecklistItem, type FicheComplete } from './types';
 export type Manque = { partie: 1 | 2 | 3 | 4 | 5; cle: string; message: string };
 
 const vide = (s: unknown) => s === undefined || s === null || String(s).trim() === '';
-const nombre = (s: unknown) => !vide(s) && /^\s*-?\d+([.,]\d+)?\s*$/.test(String(s));
 
 /** Liste de ce qui empêche de terminer la fiche. Vide ⇔ « Terminer » autorisé. */
 export function elementsManquants(f: FicheComplete, items: ChecklistItem[]): Manque[] {
@@ -56,9 +55,6 @@ export function elementsManquants(f: FicheComplete, items: ChecklistItem[]): Man
 
   // 5. Clôture
   if (!photo('ticket')) ajoute(5, 'ticket', 'Photo du ticket test');
-  if (!nombre(cl.tension_phase_neutre)) ajoute(5, 'tension_phase_neutre', 'Tension phase-neutre (nombre, en volts)');
-  if (!nombre(cl.tension_neutre_terre)) ajoute(5, 'tension_neutre_terre', 'Tension neutre-terre (nombre, en volts)');
-  if (!photo('multimetre')) ajoute(5, 'multimetre', 'Photo du multimètre');
   if (cl.gestionnaire_absent) {
     if (vide(cl.motif_absence)) ajoute(5, 'motif_absence', "Motif de l'absence du gestionnaire");
     if (!photo('site_absent')) ajoute(5, 'photo_site_absent', 'Photo du site (gestionnaire absent)');

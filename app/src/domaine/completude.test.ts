@@ -80,8 +80,10 @@ test('partie 4 : système', () => {
 });
 
 test('partie 5 : clôture et signature', () => {
-  const f = complete(); f.fiche.cloture.tension_phase_neutre = 'environ 230';
-  expect(cles(f)).toEqual(['5:tension_phase_neutre']);
+  // Les mesures électriques ne sont plus exigées à la clôture (le consultant n'a pas forcément de multimètre).
+  const f = complete(); f.fiche.cloture = { gestionnaire_nom: 'M. Ngoma' };
+  f.photos = f.photos.filter((p) => p.cible !== 'multimetre');
+  expect(cles(f)).toEqual([]);
   const g = complete(); g.signature = false;
   expect(cles(g)).toEqual(['5:signature']);
   const h = complete(); h.signature = false; h.fiche.cloture.gestionnaire_absent = true;

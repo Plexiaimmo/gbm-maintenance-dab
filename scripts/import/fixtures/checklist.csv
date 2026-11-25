@@ -33,7 +33,7 @@ CHK-P123,Préventive,230,Qualité d'impression,OUI,Tous,Imprimantes,Imprimer un 
 CHK-P124,Préventive,240,Imprimante journal,NON,Tous,Imprimantes,Même nettoyage que l'imprimante reçu (N/A si journal électronique uniquement).,NON,NON,OUI
 CHK-P125,Préventive,250,Amortisseurs de portes,OUI,Tous,Généralités,Contrôler le fonctionnement des amortisseurs de portes.,NON,NON,OUI
 CHK-P126,Préventive,260,Masses et câbles,OUI,Tous,Généralités,Contrôler les connexions de masse et des câbles ; aucun câble endommagé.,NON,NON,OUI
-CHK-P127,Préventive,270,Tension secteur et terre,OUI,Tous,Généralités,Mesurer phase-neutre et neutre-terre ; noter les valeurs en commentaire ; photo du multimètre.,OUI,OUI,OUI
+CHK-P127,Préventive,270,Tension secteur et terre,NON,Tous,Généralités,"Si vous avez un multimètre : mesurer phase-neutre et neutre-terre, noter les valeurs en commentaire, photo du multimètre. Sinon, touchez « Non applicable ».",OUI,OUI,OUI
 CHK-P128,Préventive,280,Serrures et contacts de porte,OUI,Tous,Généralités,Contrôler le bon fonctionnement des serrures et des contacts.,NON,NON,OUI
 CHK-P129,Préventive,290,Onduleur (UPS),NON,Tous,Généralités,Vérifier l'état de la batterie et la bascule sur onduleur (N/A si absent).,NON,NON,OUI
 CHK-P130,Préventive,300,Anti-skimming,OUI,Tous,Sécurité,"Vérifier l'absence de dispositif étranger sur le lecteur, le clavier et la façade.",NON,NON,OUI

@@ -11,12 +11,6 @@ export function Cloture({ fiche }: { fiche: Fiche }) {
     <section>
       <h2>Ticket test</h2>
       <BoutonPhoto ficheId={fiche.id} cible="ticket" libelle="Photographier le ticket test" />
-      <h2>Mesures électriques</h2>
-      <div className="deux-colonnes">
-        <Champ libelle="Phase-neutre" clavier="nombre" suffixe="V" valeur={c.tension_phase_neutre} enregistrer={(v) => maj({ tension_phase_neutre: v })} />
-        <Champ libelle="Neutre-terre" clavier="nombre" suffixe="V" valeur={c.tension_neutre_terre} enregistrer={(v) => maj({ tension_neutre_terre: v })} />
-      </div>
-      <BoutonPhoto ficheId={fiche.id} cible="multimetre" libelle="Photographier le multimètre" />
       <h2>Gestionnaire de l'agence</h2>
       <Choix<boolean> options={[[false, 'Présent, il signe'], [true, 'Absent ou refus']]} valeur={!!c.gestionnaire_absent}
         choisir={(v) => maj({ gestionnaire_absent: v })} />

@@ -53,9 +53,8 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
       <Vignette cible="journal" /><Vignette cible="antiskimming" />
 
       <h2>5. Clôture</h2>
-      <p>Phase-neutre {f.cloture.tension_phase_neutre} V · neutre-terre {f.cloture.tension_neutre_terre} V ·
-        {f.cloture.gestionnaire_absent ? ` gestionnaire absent : ${f.cloture.motif_absence}` : ` gestionnaire : ${f.cloture.gestionnaire_nom}`}</p>
-      <Vignette cible="ticket" /><Vignette cible="multimetre" /><Vignette cible="signature" /><Vignette cible="site_absent" />
+      <p>{f.cloture.gestionnaire_absent ? `Gestionnaire absent : ${f.cloture.motif_absence}` : `Gestionnaire : ${f.cloture.gestionnaire_nom}`}</p>
+      <Vignette cible="ticket" /><Vignette cible="signature" /><Vignette cible="site_absent" />
 
       <h2>Historique</h2>
       <ul>{d.historique.map((h: any) => <li key={h.id}>{new Date(h.at).toLocaleString('fr-FR')} — {h.action}{h.details?.apres ? ` → ${h.details.apres}` : ''}{h.details?.motif ? ` (${h.details.motif})` : ''}</li>)}</ul>
