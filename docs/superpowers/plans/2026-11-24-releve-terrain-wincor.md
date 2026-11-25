@@ -109,7 +109,7 @@
 - [ ] **Step 1 : Tests** de `valider(corps)` : rôle hors liste → erreur ; e-mail mal formé → erreur ; mot de passe < 10 caractères → erreur.
 - [ ] **Step 2 : Lancer** (`deno test` si Deno installable, sinon tests de la fonction pure via Vitest) → FAIL.
 - [ ] **Step 3 : Implémenter**, créer le secret `JETON_INSTALLATION` (aléatoire), déployer (`deploy_edge_function`).
-- [ ] **Step 4 : Créer les comptes** : Yousri (admin), Berty et King (superviseur), un compte de test consultant `test.consultant` (alias de yosri.miled@gmail.com) ; Chaker dès réception de son e-mail. Mots de passe générés, remis à Yousri dans la conversation (jamais dans le dépôt).
+- [ ] **Step 4 : Créer les comptes** : Yousri (admin), Berty et King (superviseur), un compte de test consultant `test.consultant` ; Chaker dès réception de son e-mail. Mots de passe générés, remis à Yousri dans la conversation (jamais dans le dépôt).
 - [ ] **Step 5 : Vérifier** : appel sans jeton → 403 ; `select role from profils` = 4 lignes attendues.
 - [ ] **Step 6 : Commit** `feat(auth): création des comptes par fonction serveur`.
 
