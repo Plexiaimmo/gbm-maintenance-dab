@@ -14,6 +14,8 @@ describe('navigation mémorisée (survit à un rechargement de la page)', () => 
     expect(lireEcran()).toEqual({ nom: 'detail', ficheId: 'F2' });
     memoriserEcran({ nom: 'suivi' });
     expect(lireEcran()).toEqual({ nom: 'suivi' });
+    memoriserEcran({ nom: 'synthese' });
+    expect(lireEcran()).toEqual({ nom: 'synthese' });
   });
 
   it("revient à la liste pour les écrans qui ne se rouvrent pas tels quels (arrivée, nouveau DAB)", () => {

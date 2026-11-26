@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import { toutLire } from '../lib/pagination';
 import type { DabSuivi, FicheSuivi, Signal } from './suivi';
+import type { ResultatValidation } from './validation';
 
 const verifier = <T,>(r: { data: T | null; error: { message: string } | null }): T => {
   if (r.error) throw new Error(r.error.message);
@@ -42,9 +43,10 @@ export async function chargerDetail(id: string) {
     photos: (photos as any[]).map((p) => ({ ...p, url: urls.find((u) => u.path === p.storage_path)?.signedUrl })) };
 }
 
-export async function valider(id: string, appliquer: boolean) {
-  const { error } = await supabase.rpc('valider_fiche', { p_id: id, appliquer_corrections: appliquer });
+export async function valider(id: string, appliquer: boolean): Promise<ResultatValidation | null> {
+  const { data, error } = await supabase.rpc('valider_fiche', { p_id: id, appliquer_corrections: appliquer });
   if (error) throw new Error(error.message);
+  return (data as ResultatValidation | null) ?? null;
 }
 
 export async function renvoyer(id: string, motif: string) {

@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { chargerDetail, renvoyer, valider } from '../../admin/donnees';
 import { tonEtat } from '../../domaine/etatPiece';
+import { resumerValidation } from '../../admin/validation';
+import { legendesPhotos } from '../../admin/photos';
 const ETATS: Record<string, string> = { Bon: 'Bon', Use: 'Usé', A_remplacer: 'À remplacer', Absent: 'Absent' };
 
-export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retour: () => void; admin: boolean }) {
+export function FicheDetail({ ficheId, retour, admin, retourLibelle = '← Suivi' }: { ficheId: string; retour: () => void; admin: boolean; retourLibelle?: string }) {
   const [d, setD] = useState<Awaited<ReturnType<typeof chargerDetail>>>();
   const [erreur, setErreur] = useState('');
   const [motif, setMotif] = useState('');
   const [agrandie, setAgrandie] = useState<string>();
+  const [compteRendu, setCompteRendu] = useState<ReturnType<typeof resumerValidation>>();
   const charger = () => chargerDetail(ficheId).then(setD).catch((e) => setErreur(e.message));
   useEffect(() => { void charger(); }, [ficheId]);
   if (erreur) return <p className="page erreur">{erreur} <button onClick={retour}>Retour</button></p>;
@@ -16,14 +19,21 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
   const photo = (cible: string) => d.photos.find((p: any) => p.cible === cible);
   const Vignette = ({ cible }: { cible: string }) => { const p = photo(cible); return p?.url ? <img className="vignette" src={p.url} alt={cible} onClick={() => setAgrandie(p.url)} /> : null; };
   const agir = async (f2: () => Promise<void>) => { try { await f2(); await charger(); } catch (e) { setErreur((e as Error).message); } };
+  const toutes = legendesPhotos(d.photos, d.items);
   const duree = f.depart_at ? Math.round((Date.parse(f.depart_at) - Date.parse(f.arrivee_at)) / 60000) : null;
 
   return (
     <div className="page large detail">
       {agrandie && <div className="loupe" onClick={() => setAgrandie(undefined)}><img src={agrandie} alt="" /></div>}
-      <div className="entete"><button className="petit" onClick={retour}>← Suivi</button><h1>{dab.code} — {dab.sites?.nom ?? dab.agence_saisie}</h1>{dab.origine === 'nouveau_a_verifier' && <span className="statut brouillon">Nouveau DAB, à vérifier</span>}</div>
+      <div className="entete"><button className="petit" onClick={retour}>{retourLibelle}</button><h1>{dab.code} — {dab.sites?.nom ?? dab.agence_saisie}</h1>{dab.origine === 'nouveau_a_verifier' && <span className="statut brouillon">Nouveau DAB, à vérifier</span>}</div>
       <p>Statut : <b>{({ brouillon: 'En cours', terminee: 'À valider', validee: 'Validée', renvoyee: 'Renvoyée' } as Record<string, string>)[f.statut]}</b> · Arrivée {new Date(f.arrivee_at).toLocaleString('fr-FR')} · {duree !== null ? `${duree} min sur place` : 'non terminée'}
         {f.sans_signature && <b className="alerte"> · sans signature</b>}</p>
+      {compteRendu && (
+        <div className="bandeau-info" role="status">
+          {compteRendu.appliquees}
+          {compteRendu.nonAppliquees.length > 0 && <ul className="alerte">{compteRendu.nonAppliquees.map((x) => <li key={x}>À faire à la main : {x}</li>)}</ul>}
+        </div>
+      )}
       {d.signal?.raisons?.length > 0 && <p className={d.signal.douteux ? 'erreur' : 'info'}>{d.signal.douteux ? '⚠ ' : ''}{d.signal.raisons.join(' · ')}</p>}
 
       <h2>1. Identification — base / relevé</h2>
@@ -61,13 +71,23 @@ export function FicheDetail({ ficheId, retour, admin }: { ficheId: string; retou
       <p>{f.cloture.gestionnaire_absent ? `Gestionnaire absent : ${f.cloture.motif_absence}` : `Gestionnaire : ${f.cloture.gestionnaire_nom}`}</p>
       <Vignette cible="ticket" /><Vignette cible="signature" /><Vignette cible="site_absent" />
 
+      <h2>Toutes les photos ({toutes.length})</h2>
+      {toutes.length === 0 ? <p className="aucun">Aucune photo sur cette fiche.</p> : (
+        <div className="grille-photos">{toutes.map((p) => (
+          <figure key={p.cible + p.url} className="photo-grille">
+            <img src={p.url} alt={p.legende} loading="lazy" onClick={() => setAgrandie(p.url)} />
+            <figcaption>{p.legende}</figcaption>
+          </figure>
+        ))}</div>
+      )}
+
       <h2>Historique</h2>
       <ul>{d.historique.map((h: any) => <li key={h.id}>{new Date(h.at).toLocaleString('fr-FR')} — {h.action}{h.details?.apres ? ` → ${h.details.apres}` : ''}{h.details?.motif ? ` (${h.details.motif})` : ''}</li>)}</ul>
 
       {admin && f.statut === 'terminee' && (
         <div className="actions">
-          <button className="principal" onClick={() => agir(() => valider(ficheId, true))}>Valider et mettre à jour le DAB (SN, modèle, marque, GPS)</button>
-          <button onClick={() => agir(() => valider(ficheId, false))}>Valider sans modifier le DAB</button>
+          <button className="principal" onClick={() => agir(async () => setCompteRendu(resumerValidation(await valider(ficheId, true))))}>Valider et mettre à jour le DAB (SN, modèle, marque, code, banque, agence, GPS)</button>
+          <button onClick={() => agir(async () => { await valider(ficheId, false); setCompteRendu(undefined); })}>Valider sans modifier le DAB</button>
           <label>Motif du renvoi au consultant<textarea value={motif} onChange={(e) => setMotif(e.target.value)} /></label>
           <button disabled={!motif.trim()} onClick={() => agir(() => renvoyer(ficheId, motif))}>Renvoyer la fiche</button>
         </div>

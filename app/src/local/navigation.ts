@@ -1,7 +1,7 @@
 /** Où l'on en est dans l'application, gardé sur la tablette : un rechargement de la page (geste « tirer pour
  *  actualiser », mise à jour de l'application, navigateur recyclé) ne doit jamais faire sortir de la fiche. */
 export type EcranMemo =
-  | { nom: 'suivi' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' }
+  | { nom: 'suivi' } | { nom: 'synthese' } | { nom: 'detail'; ficheId: string } | { nom: 'liste' }
   | { nom: 'nouveau'; code?: string } | { nom: 'arrivee'; dabId: string } | { nom: 'fiche'; ficheId: string };
 
 const CLE_ECRAN = 'ecran';
@@ -16,7 +16,7 @@ export function memoriserEcran(e: EcranMemo) {
 export function lireEcran(): EcranMemo {
   try {
     const e = JSON.parse(localStorage.getItem(CLE_ECRAN) ?? 'null') as { nom?: string; ficheId?: unknown } | null;
-    if (e?.nom === 'suivi') return { nom: 'suivi' };
+    if (e?.nom === 'suivi' || e?.nom === 'synthese') return { nom: e.nom };
     if ((e?.nom === 'fiche' || e?.nom === 'detail') && typeof e.ficheId === 'string' && e.ficheId) return { nom: e.nom, ficheId: e.ficheId };
   } catch { /* valeur abîmée : on repart de la liste */ }
   return { nom: 'liste' };

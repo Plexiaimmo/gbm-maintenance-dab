@@ -4,7 +4,7 @@ import { resumerSuivi, type LigneSuivi } from '../../admin/suivi';
 
 const STATUTS: Record<string, string> = { brouillon: 'En cours', terminee: 'À valider', validee: 'Validée', renvoyee: 'Renvoyée' };
 
-export function Suivi({ ouvrir, exporter }: { ouvrir: (ficheId: string) => void; exporter?: () => void }) {
+export function Suivi({ ouvrir, exporter, synthese }: { ouvrir: (ficheId: string) => void; exporter?: () => void; synthese?: () => void }) {
   const [donnees, setDonnees] = useState<Awaited<ReturnType<typeof chargerSuivi>>>();
   const [erreur, setErreur] = useState('');
   const [filtres, setFiltres] = useState({ banque: '', ville: '', statut: '' });
@@ -26,6 +26,7 @@ export function Suivi({ ouvrir, exporter }: { ouvrir: (ficheId: string) => void;
   return (
     <div className="page large">
       <div className="entete"><h1>Suivi du relevé Wincor</h1><button className="petit" onClick={charger}>Actualiser</button>
+        {synthese && <button className="petit" onClick={synthese}>À signaler</button>}
         {exporter && <button className="petit" onClick={exporter}>Exporter Excel</button>}</div>
       <div className="compteurs">
         <div><b>{c.visites}<small> / {c.total}</small></b><span>visités</span></div><div><b>{c.restants}</b><span>restants</span></div>
@@ -40,11 +41,11 @@ export function Suivi({ ouvrir, exporter }: { ouvrir: (ficheId: string) => void;
           <option value="terminee">À valider</option><option value="validee">Validée</option><option value="renvoyee">Renvoyée</option><option value="douteux">⚠ Douteux</option>
         </select>
       </div>
-      <table className="tableau">
+      <table className="tableau tableau-suivi">
         <thead><tr><th>DAB</th><th>Banque · agence</th><th>Ville</th><th>Statut</th><th>Visite</th><th>Signaux</th></tr></thead>
         <tbody>{lignes.map((l) => (
           <tr key={l.dab.id} className={l.fiche ? 'cliquable' : ''} onClick={() => l.fiche && ouvrir(l.fiche.id)}>
-            <td><b>{l.dab.code}</b>{l.dab.nouveau && <> <span className="statut brouillon">Nouveau DAB</span></>}</td><td>{l.dab.banque} · {l.dab.agence}</td><td>{l.dab.ville}</td>
+            <td className="c-dab"><b>{l.dab.code}</b>{l.dab.nouveau && <> <span className="statut brouillon">Nouveau DAB</span></>}</td><td className="c-lieu">{l.dab.banque} · {l.dab.agence}</td><td className="c-lieu">{l.dab.ville}</td>
             <td>{l.fiche ? STATUTS[l.fiche.statut] : 'Non visité'}{l.nbFiches > 1 ? ` (${l.nbFiches} visites)` : ''}</td>
             <td>{l.fiche ? new Date(l.fiche.arrivee_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}</td>
             <td>{l.signal?.douteux && <span className="alerte">⚠ {l.signal.raisons.filter((x) => !x.startsWith('GPS non comparable')).join(' · ')}</span>}
