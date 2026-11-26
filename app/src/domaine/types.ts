@@ -25,15 +25,21 @@ export interface Parametre { cle: string; valeur: string }
 export interface Identification {
   modele?: string; numero_serie?: string; corrections?: string;
   /** Corrections de la liste relevées sur place ; vide = la liste est juste. */
-  marque?: string; code_affiche?: string; banque?: string; agence?: string;
+  marque?: string; code_affiche?: string; banque?: string; agence?: string; ville?: string;
+  /** Plaque absente ou illisible : le n° de série n'est plus exigé (la photo de l'emplacement reste). */
+  plaque_illisible?: boolean;
+  /** Motif quand le relevé ne peut pas être fait (DAB retiré, accès refusé…) : seule une photo du site est alors exigée. */
+  visite_impossible?: string;
 }
 export interface Systeme {
   version_windows?: string; logiciel?: string; logiciel_version?: string; heure_correcte?: boolean;
   espace_disque_go?: string; test_interne?: string; antiskimming?: boolean;
+  acces_impossible?: boolean; motif_acces?: string;
 }
 export interface Cloture {
   tension_phase_neutre?: string; tension_neutre_terre?: string; gestionnaire_nom?: string;
   gestionnaire_absent?: boolean; motif_absence?: string;
+  ticket_impossible?: boolean; motif_ticket?: string;
 }
 
 export interface Fiche {

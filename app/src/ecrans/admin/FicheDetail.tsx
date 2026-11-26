@@ -3,6 +3,7 @@ import { chargerDetail, renvoyer, valider } from '../../admin/donnees';
 import { tonEtat } from '../../domaine/etatPiece';
 import { resumerValidation } from '../../admin/validation';
 import { legendesPhotos } from '../../admin/photos';
+import { derogations } from '../../domaine/completude';
 const ETATS: Record<string, string> = { Bon: 'Bon', Use: 'Usé', A_remplacer: 'À remplacer', Absent: 'Absent' };
 
 export function FicheDetail({ ficheId, retour, admin, retourLibelle = '← Suivi' }: { ficheId: string; retour: () => void; admin: boolean; retourLibelle?: string }) {
@@ -20,6 +21,7 @@ export function FicheDetail({ ficheId, retour, admin, retourLibelle = '← Suivi
   const Vignette = ({ cible }: { cible: string }) => { const p = photo(cible); return p?.url ? <img className="vignette" src={p.url} alt={cible} onClick={() => setAgrandie(p.url)} /> : null; };
   const agir = async (f2: () => Promise<void>) => { try { await f2(); await charger(); } catch (e) { setErreur((e as Error).message); } };
   const toutes = legendesPhotos(d.photos, d.items);
+  const exceptions = derogations({ fiche: f, reponses: d.reponses } as never, d.items);
   const duree = f.depart_at ? Math.round((Date.parse(f.depart_at) - Date.parse(f.arrivee_at)) / 60000) : null;
 
   return (
@@ -36,12 +38,14 @@ export function FicheDetail({ ficheId, retour, admin, retourLibelle = '← Suivi
       )}
       {d.signal?.raisons?.length > 0 && <p className={d.signal.douteux ? 'erreur' : 'info'}>{d.signal.douteux ? '⚠ ' : ''}{d.signal.raisons.join(' · ')}</p>}
 
+      {exceptions.length > 0 && <div className="bandeau-info attention"><b>Exceptions acceptées sur le terrain</b><ul>{exceptions.map((x) => <li key={x}>{x}</li>)}</ul></div>}
       <h2>1. Identification — base / relevé</h2>
       <table className="tableau"><tbody>
         <tr><td>N° de série</td><td>{dab.numero_serie ?? '—'}</td><td><b>{f.identification.numero_serie}</b></td></tr>
         <tr><td>Modèle</td><td>{dab.modele ?? '—'}</td><td><b>{f.identification.modele}</b></td></tr>
         {dab.code_banque && <tr><td>Code de la banque</td><td colSpan={2}><b>{dab.code_banque}</b></td></tr>}
         <tr><td>Marque</td><td>{dab.marque ?? '—'}</td><td><b>{f.identification.marque}</b></td></tr>
+        {f.identification.ville && <tr><td>Ville (à vérifier)</td><td>{dab.ville ?? '—'}</td><td><b>{f.identification.ville}</b></td></tr>}
         {f.identification.code_affiche && <tr><td>Code affiché (à vérifier)</td><td>{dab.code}</td><td><b>{f.identification.code_affiche}</b></td></tr>}
         {f.identification.banque && <tr><td>Banque (à vérifier)</td><td>{dab.agence_saisie?.split(' — ')[0] ?? '—'}</td><td><b>{f.identification.banque}</b></td></tr>}
         {f.identification.agence && <tr><td>Agence (à vérifier)</td><td>{dab.sites?.nom ?? dab.agence_saisie?.split(' — ')[1] ?? '—'}</td><td><b>{f.identification.agence}</b></td></tr>}

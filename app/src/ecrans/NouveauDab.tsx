@@ -2,8 +2,8 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../local/db';
 import { normaliserSN } from '../domaine/sn';
-import { codeDab, normaliserAgence } from '../domaine/codeDab';
-import { Champ, Choix, ChoixOuAutre } from './parties/Commun';
+import { codeDab, nomVille, normaliserAgence, VILLES_PRINCIPALES } from '../domaine/codeDab';
+import { Champ, ChoixOuAutre } from './parties/Commun';
 import { vibrer } from '../lib/tactile';
 import { LogoBanque } from '../composants/Logos';
 
@@ -18,13 +18,16 @@ export function NouveauDab({ codeInitial, consultantId, cree, annuler }: { codeI
   const dabs = useLiveQuery(() => db.dab.toArray(), []) ?? [];
   const [banque, setBanque] = useState('');
   const [banqueAutre, setBanqueAutre] = useState('');
-  const [ville, setVille] = useState('Brazzaville');
+  const [villeChoix, setVilleChoix] = useState('Brazzaville');
+  const [villeAutre, setVilleAutre] = useState('');
   const [agence, setAgence] = useState('');
   const [agenceAutre, setAgenceAutre] = useState('');
   const [v, setV] = useState({ marque: 'Wincor Nixdorf', modele: '', sn: '', codeBanque: (codeInitial ?? '').toUpperCase() });
   const [erreur, setErreur] = useState('');
 
-  const codeBq = banque === AUTRE ? normaliserAgence(banqueAutre).replace(/-/g, '') : banque;
+  const villesProposees = useMemo(() => [...new Set([...VILLES_PRINCIPALES, ...dabs.map((d) => d.ville ?? '').filter(Boolean)])], [dabs]);
+  const ville = villeChoix === AUTRE ? nomVille(villeAutre, villesProposees) : villeChoix;
+  const codeBq = banque === AUTRE ? normaliserAgence(banqueAutre).replace(/-/g, '').slice(0, 8) : banque;
   const banqueId = banques.find((b) => b.code === banque)?.id;
   // Agences connues pour cette banque et cette ville : celles de la liste, puis celles déjà saisies sur le terrain.
   const agences = useMemo(() => {
@@ -42,9 +45,8 @@ export function NouveauDab({ codeInitial, consultantId, cree, annuler }: { codeI
   async function envoyer(e: FormEvent) {
     e.preventDefault();
     if (!code) { setErreur('Choisissez la banque, la ville et l’agence : le code se calcule tout seul.'); return; }
-    if (!v.modele.trim()) { setErreur('Indiquez le modèle.'); return; }
     const id = crypto.randomUUID();
-    await db.dab.put({ id, code, site_id: site?.siteId ?? null, marque: v.marque, modele: v.modele.trim(), numero_serie: normaliserSN(v.sn),
+    await db.dab.put({ id, code, site_id: site?.siteId ?? null, marque: v.marque, modele: v.modele.trim() || 'À vérifier', numero_serie: normaliserSN(v.sn),
       ville, origine: 'nouveau_a_verifier', cree_par: consultantId, agence_saisie: `${codeBq} — ${nomAgence}`,
       code_banque: v.codeBanque.trim().toUpperCase() || null, sync: 'a_envoyer' });
     cree(id);
@@ -66,11 +68,17 @@ export function NouveauDab({ codeInitial, consultantId, cree, annuler }: { codeI
           {banques.filter((b) => b.code !== 'TEST').map((b) => pastille(banque === b.code, b.code, () => { setBanque(b.code); setAgence(''); }, b.code))}
           {pastille(banque === AUTRE, 'Autre banque', () => { setBanque(AUTRE); setAgence(''); })}
         </div>
-        {banque === AUTRE && <Champ libelle="Sigle de la banque" aide="2 à 8 lettres, par exemple LCB" clavier="sn" valeur={banqueAutre} enregistrer={setBanqueAutre} />}
+        {banque === AUTRE && <Champ libelle="Sigle de la banque" aide="2 à 8 lettres, par exemple LCB (au-delà, seules les 8 premières sont gardées)" clavier="sn" valeur={banqueAutre} enregistrer={setBanqueAutre} />}
       </div>
 
-      <Choix libelle="Ville" options={[['Brazzaville', 'Brazzaville'], ['Pointe-Noire', 'Pointe-Noire']]} valeur={ville}
-        choisir={(x) => { setVille(x); setAgence(''); }} />
+      <div className="champ">
+        <p className="champ-libelle">Ville</p>
+        <div className="pastilles" role="radiogroup" aria-label="Ville">
+          {villesProposees.map((x) => pastille(villeChoix === x, x, () => { setVilleChoix(x); setAgence(''); }))}
+          {pastille(villeChoix === AUTRE, 'Autre ville', () => { setVilleChoix(AUTRE); setAgence(''); })}
+        </div>
+        {villeChoix === AUTRE && <Champ libelle="Nom de la ville ou de la localité" aide="Par exemple Mossaka, Kintélé" valeur={villeAutre} enregistrer={setVilleAutre} />}
+      </div>
 
       {codeBq && (
         <div className="champ">

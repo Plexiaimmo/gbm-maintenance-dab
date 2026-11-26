@@ -47,8 +47,9 @@ export function Preventif({ ficheId, items, reponses }: { ficheId: string; items
                     <button type="button" role="radio" aria-checked={r?.valeur === 'OK'} className={`rep ok ${r?.valeur === 'OK' ? 'actif' : ''}`} onClick={() => choisir(it, 'OK')}><Icone nom="coche" />OK</button>
                     <button type="button" role="radio" aria-checked={r?.valeur === 'NOK'} className={`rep nok ${r?.valeur === 'NOK' ? 'actif' : ''}`} onClick={() => choisir(it, 'NOK')}><Icone nom="croix" />Pas OK</button>
                   </div>
-                  {!it.obligatoire && (
-                    <button type="button" className={`rep-na ${r?.valeur === 'NA' ? 'actif' : ''}`} onClick={() => choisir(it, 'NA')}>Non applicable</button>
+                  <button type="button" className={`rep-na ${r?.valeur === 'NA' ? 'actif' : ''}`} onClick={() => choisir(it, 'NA')}>Non applicable</button>
+                  {r?.valeur === 'NA' && it.obligatoire && (
+                    <Champ libelle="Pourquoi non applicable ?" aide="obligatoire sur ce point" multi valeur={r.commentaire} enregistrer={(v) => commenter(ficheId, it.id, v)} />
                   )}
                   {r && r.valeur !== 'NA' && (r.valeur === 'NOK' || it.commentaire_requis) && (
                     r.valeur === 'NOK'

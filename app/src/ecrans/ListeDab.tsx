@@ -1,12 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../local/db';
+import { villesConnues } from '../domaine/codeDab';
 import { avancementTournee, rangerTournee, statutDab, type StatutDab } from '../domaine/tournee';
 import { Icone } from '../composants/Icone';
 import { LogoBanque, LogoGbm } from '../composants/Logos';
 
 const LIBELLE: Record<StatutDab, string> = { brouillon: 'En cours', terminee: 'Terminée', validee: 'Validée', renvoyee: 'À reprendre', a_visiter: '' };
-const VILLES = ['Brazzaville', 'Pointe-Noire'];
 
 const initiales = (nom: string) => nom.split(/\s+/).filter(Boolean).slice(0, 2).map((m) => m[0]!.toUpperCase()).join('');
 const aujourdhui = () => new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -21,6 +21,7 @@ export function ListeDab({ ouvrir, nouveau, nom, actions }: { ouvrir: (dabId: st
   const banques = useLiveQuery(() => db.banques.toArray(), []) ?? [];
   const fiches = useLiveQuery(() => db.fiches.toArray(), []) ?? [];
   const av = avancementTournee(dabs, fiches);
+  const VILLES = villesConnues(dabs.map((d) => d.ville));
 
   const lignes = useMemo(() => {
     const t = texte.trim().toLowerCase();
@@ -62,7 +63,7 @@ export function ListeDab({ ouvrir, nouveau, nom, actions }: { ouvrir: (dabId: st
           </div>
         </div>
         <div className="avancement">
-          <small>Tournée Wincor, Brazzaville et Pointe-Noire</small>
+          <small>Tournée Wincor</small>
           <p className="chiffre"><b>{av.releves}</b><span>/ {av.total} DAB relevés</span></p>
           <div className="progres" role="progressbar" aria-label="DAB relevés" aria-valuemin={0} aria-valuemax={av.total} aria-valuenow={av.releves}>
             <div style={{ width: `${av.total ? (100 * av.releves) / av.total : 0}%` }} />

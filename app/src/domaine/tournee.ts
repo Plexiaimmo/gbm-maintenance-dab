@@ -1,14 +1,16 @@
+import { estAbandonnee } from './completude';
 import type { ChecklistItem, Dab, Fiche, FicheComplete } from './types';
 
 export type StatutDab = Fiche['statut'] | 'a_visiter';
 
 /** Statut d'un DAB pour la tournée : celui de sa fiche la plus récente. */
-export function statutDab(dabId: string, fiches: Pick<Fiche, 'dab_id' | 'statut' | 'arrivee_at'>[]): StatutDab {
-  const f = fiches.filter((x) => x.dab_id === dabId).sort((a, b) => b.arrivee_at.localeCompare(a.arrivee_at))[0];
+type FicheTournee = Pick<Fiche, 'dab_id' | 'statut' | 'arrivee_at'> & { identification?: { visite_impossible?: string } };
+export function statutDab(dabId: string, fiches: FicheTournee[]): StatutDab {
+  const f = fiches.filter((x) => x.dab_id === dabId && !estAbandonnee(x)).sort((a, b) => b.arrivee_at.localeCompare(a.arrivee_at))[0];
   return f ? f.statut : 'a_visiter';
 }
 
-export function avancementTournee(dabs: Pick<Dab, 'id'>[], fiches: Pick<Fiche, 'dab_id' | 'statut' | 'arrivee_at'>[]) {
+export function avancementTournee(dabs: Pick<Dab, 'id'>[], fiches: FicheTournee[]) {
   const r = { total: dabs.length, releves: 0, enCours: 0, aReprendre: 0, aVisiter: 0 };
   for (const d of dabs) {
     const s = statutDab(d.id, fiches);

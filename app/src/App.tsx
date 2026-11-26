@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import { deconnecter, useSession } from './local/session';
 import { chargerReferentiel } from './local/referentiel';
+import { estAbandonnee } from './domaine/completude';
 import { db } from './local/db';
 import { Connexion } from './ecrans/Connexion';
 import { ListeDab } from './ecrans/ListeDab';
@@ -53,7 +54,7 @@ export default function App() {
     if (!session) return;
     chargerReferentiel(supabase)
       .then((r) => setMessage(`Liste des DAB à jour : ${r.dab}`))
-      .catch(async () => setMessage(`Hors ligne — liste gardée sur la tablette : ${await db.dab.count()} DAB`));
+      .catch(async (e: Error) => setMessage(e.message.startsWith('Le serveur') ? e.message : `Hors ligne — liste gardée sur la tablette : ${await db.dab.count()} DAB`));
   }, [session]);
 
   if (!pret) return <p className="page">Chargement…</p>;
@@ -62,7 +63,7 @@ export default function App() {
 
   async function ouvrirDab(dabId: string) {
     const enCours = (await db.fiches.where('dab_id').equals(dabId).toArray())
-      .filter((f) => f.consultant_id === moi && f.statut !== 'validee')
+      .filter((f) => f.consultant_id === moi && f.statut !== 'validee' && !estAbandonnee(f))
       .sort((a, b) => b.arrivee_at.localeCompare(a.arrivee_at))[0];
     setEcran(enCours ? { nom: 'fiche', ficheId: enCours.id } : { nom: 'arrivee', dabId });
   }
@@ -104,7 +105,7 @@ export default function App() {
       )}
       {confirmation}
       {(ecran.nom === 'liste' || ecran.nom === 'fiche' || ecran.nom === 'arrivee' || ecran.nom === 'nouveau') && <EtatEnvoi attente={synchro.attente} refuses={synchro.refuses} enLigne={synchro.enLigne} erreur={!session ? 'session' : synchro.dernier?.erreur} lancer={synchro.lancer} reconnecter={() => setReconnexion(true)} />}
-      {message.startsWith('Hors ligne') && ecran.nom === 'liste' && <p className="page info">{message}</p>}
+      {(message.startsWith('Hors ligne') || message.startsWith('Le serveur')) && ecran.nom === 'liste' && <p className="page info">{message}</p>}
       {ecran.nom === 'suivi' && <Suivi ouvrir={(ficheId) => { setDepuisSynthese(false); setEcran({ nom: 'detail', ficheId }); }} synthese={() => setEcran({ nom: 'synthese' })}
         exporter={async () => {
           const [{ construireClasseur }, XLSX, d] = await Promise.all([import('./admin/export'), import('xlsx'), chargerExport()]);

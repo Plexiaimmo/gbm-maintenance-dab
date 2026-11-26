@@ -1,19 +1,24 @@
+import { derogations } from '../domaine/completude';
 import * as XLSX from 'xlsx';
 
 type Obj = Record<string, unknown>;
 export interface ExportDonnees {
   fiches: (Obj & { id: string; dab_code: string; banque: string; agence: string; ville: string | null; statut: string;
     arrivee_at: string; depart_at?: string | null; nouveau?: boolean; douteux: boolean; raisons: string[]; sans_signature: boolean;
-    identification: Obj; systeme: Obj; cloture: Obj })[];
+    identification: Obj; systeme: Obj; cloture: Obj; sn_base?: string | null; modele_base?: string | null })[];
   reponses: { fiche_id: string; item_id: string; libelle: string; valeur: string; commentaire?: string | null }[];
   etats: { fiche_id: string; module: string; etat: string; commentaire?: string | null }[];
   pieces: { fiche_id: string; module: string; pn: string | null; pn_libre: string | null; quantite: number }[];
   articles: { pn: string; designation: string | null }[];
+  /** Points de contrôle (pour reconnaître les N/A sur un point obligatoire). */
+  items?: { id: string; libelle: string; obligatoire: boolean }[];
+  /** Tous les DAB de la base, pour repérer un n° de série déjà connu ailleurs. */
+  dabsBase?: { code: string; numero_serie: string | null }[];
 }
 
 const date = (s?: string | null) => (s ? new Date(s) : null);
 
-const CORRECTIONS: [string, string][] = [['marque', 'Marque'], ['code_affiche', 'Code affiché'], ['banque', 'Banque'], ['agence', 'Agence']];
+export const CORRECTIONS: [string, string][] = [['ville', 'Ville'], ['marque', 'Marque'], ['code_affiche', 'Code affiché'], ['banque', 'Banque'], ['agence', 'Agence']];
 /** Corrections de la liste relevées sur place, en une phrase lisible ; vide si la liste est juste. */
 export const correctionsProposees = (id: Obj) =>
   CORRECTIONS.filter(([k]) => String(id[k] ?? '').trim()).map(([k, l]) => `${l} : ${String(id[k]).trim()}`).join(' ; ');
@@ -29,6 +34,8 @@ export function construireClasseur(d: ExportDonnees): XLSX.WorkBook {
     'Durée (min)': f.depart_at ? Math.round((Date.parse(f.depart_at) - Date.parse(f.arrivee_at)) / 60000) : null,
     'SN relevé': f.identification.numero_serie ?? '', 'Modèle relevé': f.identification.modele ?? '',
     'Corrections proposées': correctionsProposees(f.identification), 'Autre remarque': f.identification.corrections ?? '',
+    Exceptions: derogations({ fiche: f, reponses: d.reponses.filter((r) => r.fiche_id === f.id) } as never,
+      (d.items ?? []).map((i) => ({ ...i, actif: true })) as never).join(' · '),
   }))), 'Fiches');
   XLSX.utils.book_append_sheet(wb, feuille(d.reponses.map((r) => ({ DAB: code(r.fiche_id), Point: r.item_id, 'Libellé': r.libelle,
     'Réponse': r.valeur, Commentaire: r.commentaire ?? '' }))), 'Preventif');

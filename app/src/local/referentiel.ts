@@ -17,12 +17,15 @@ export async function chargerReferentiel(client: SupabaseClient): Promise<{ dab:
       throw new Error(`Chargement de ${distante} impossible : ${(e as Error).message}`);
     }
   }
+  // Un serveur qui ne renvoie aucun DAB ni aucun point de contrôle = compte mal configuré : on garde la tablette telle quelle.
+  if (!lus.dab.length || !lus.checklist_items.length)
+    throw new Error('Le serveur ne renvoie aucun DAB : compte à vérifier par Yousri. La liste de la tablette est conservée.');
   await db.transaction('rw', TABLES.map(([, locale]) => db.table(locale)), async () => {
     for (const [distante, locale] of TABLES) {
       const t = db.table(locale);
       if (locale === 'dab') {
-        // garder les DAB ajoutés sur la tablette et pas encore envoyés
-        const enAttente = await t.where('sync').equals('a_envoyer').toArray();
+        // garder les DAB ajoutés sur la tablette et pas encore acceptés par le serveur (en attente ou refusés)
+        const enAttente = await t.where('sync').anyOf('a_envoyer', 'rejete').toArray();
         await t.clear();
         await t.bulkPut([...lus[distante], ...enAttente]);
       } else {

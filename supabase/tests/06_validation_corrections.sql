@@ -33,14 +33,15 @@ begin
   if not (r->'appliquees' ? 'code_banque' and r->'appliquees' ? 'banque' and r->'appliquees' ? 'agence') then raise exception 'ECHEC appliquees: %', r; end if;
   if jsonb_array_length(r->'non_appliquees') <> 0 then raise exception 'ECHEC non_appliquees: %', r; end if;
 
-  -- 2. banque inconnue : rien ne change, et on le dit
+  -- 2. banque inconnue : créée à la validation (rien à faire à la main), et annoncée
   r := valider_fiche('40000000-0000-0000-0000-0000000000f2', true);
   select * into d from dab where id = '30000000-0000-0000-0000-000000000001';
   select * into s from sites where id = d.site_id;
-  if s.nom <> 'Nouvelle agence' then raise exception 'ECHEC banque inconnue: le site a changé (%)', s.nom; end if;
-  if jsonb_array_length(r->'non_appliquees') < 1 or r->>'non_appliquees' not like '%ZZZ%' then raise exception 'ECHEC non_appliquees doit citer ZZZ: %', r; end if;
+  if s.nom <> 'Ailleurs' or s.banque_id <> (select id from banques where code = 'ZZZ') then raise exception 'ECHEC banque inconnue: %', s.nom; end if;
+  if not (r->'appliquees' ? 'banque_creee') or jsonb_array_length(r->'non_appliquees') <> 0 then raise exception 'ECHEC banque créée: %', r; end if;
 
-  -- 3. même agence écrite autrement (casse) : pas de doublon
+  -- 3. même agence écrite autrement (casse) : pas de doublon (le DAB revient d'abord sous TS2 / Nouvelle agence)
+  update dab set site_id = (select id from sites where nom = 'Nouvelle agence') where id = '30000000-0000-0000-0000-000000000001';
   select count(*) into n from sites;
   r := valider_fiche('40000000-0000-0000-0000-0000000000f3', true);
   if (select count(*) from sites) <> n then raise exception 'ECHEC doublon de site créé'; end if;
@@ -68,3 +69,45 @@ begin
 end $$;
 rollback;
 select 'TESTS T13 OK' as resultat;
+
+-- T14 : ville corrigée, GPS du site seulement s'il est inconnu et précis, relevé impossible = rien d'appliqué
+begin;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000a1','a@test.local'), ('00000000-0000-0000-0000-0000000000d1','adm@test.local');
+insert into profils (id, nom, role) values ('00000000-0000-0000-0000-0000000000a1','Consultant A','consultant'), ('00000000-0000-0000-0000-0000000000d1','Admin','admin');
+insert into banques (id, code, nom) values ('10000000-0000-0000-0000-000000000001','TST','Banque test');
+insert into sites (id, banque_id, nom, ville, lat, lng) values
+ ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','Agence connue','Brazzaville',-4.27,15.28),
+ ('20000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000001','Agence sans GPS','Brazzaville',null,null);
+insert into dab (id, code, site_id, marque, modele, numero_serie, ville, origine) values
+ ('30000000-0000-0000-0000-000000000001','TST-001','20000000-0000-0000-0000-000000000001','Wincor','ProCash','SN-OLD','Brazzaville','reference'),
+ ('30000000-0000-0000-0000-000000000002','TST-002','20000000-0000-0000-0000-000000000002','Wincor','ProCash',null,'Brazzaville','reference');
+insert into fiches (id, dab_id, consultant_id, statut, arrivee_at, arrivee_lat, arrivee_lng, arrivee_precision, identification) values
+ ('40000000-0000-0000-0000-0000000000f1','30000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','terminee', now(), -4.79, 11.86, 8, '{"ville":"Pointe-Noire"}'),
+ ('40000000-0000-0000-0000-0000000000f2','30000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000a1','terminee', now(), -4.30, 15.30, 900, '{}'),
+ ('40000000-0000-0000-0000-0000000000f3','30000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000a1','terminee', now(), -4.26, 15.24, 12, '{}'),
+ ('40000000-0000-0000-0000-0000000000f4','30000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','terminee', now(), -4.0, 15.0, 5, '{"visite_impossible":"DAB retiré ou introuvable","numero_serie":"AUTRE","ville":"Dolisie"}');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated"}';
+do $$
+declare d dab; s sites; r jsonb;
+begin
+  r := valider_fiche('40000000-0000-0000-0000-0000000000f1', true);
+  select * into d from dab where id = '30000000-0000-0000-0000-000000000001';
+  if d.ville <> 'Pointe-Noire' or not (r->'appliquees' ? 'ville') then raise exception 'ECHEC ville: % %', d.ville, r; end if;
+  select * into s from sites where id = '20000000-0000-0000-0000-000000000001';
+  if s.lat <> -4.27 then raise exception 'ECHEC le GPS connu du site ne doit pas être écrasé: %', s.lat; end if;
+
+  r := valider_fiche('40000000-0000-0000-0000-0000000000f2', true);
+  select * into s from sites where id = '20000000-0000-0000-0000-000000000002';
+  if s.lat is not null then raise exception 'ECHEC GPS imprécis (900 m) enregistré'; end if;
+  r := valider_fiche('40000000-0000-0000-0000-0000000000f3', true);
+  select * into s from sites where id = '20000000-0000-0000-0000-000000000002';
+  if s.lat is distinct from -4.26 then raise exception 'ECHEC GPS précis non enregistré sur un site sans position: %', s.lat; end if;
+
+  r := valider_fiche('40000000-0000-0000-0000-0000000000f4', true);
+  select * into d from dab where id = '30000000-0000-0000-0000-000000000001';
+  if d.numero_serie <> 'SN-OLD' or d.ville <> 'Pointe-Noire' then raise exception 'ECHEC relevé impossible: le DAB a changé (% %)', d.numero_serie, d.ville; end if;
+  if (select statut from fiches where id = '40000000-0000-0000-0000-0000000000f4') <> 'validee' then raise exception 'ECHEC statut'; end if;
+end $$;
+rollback;
+select 'TESTS T14 OK' as resultat;

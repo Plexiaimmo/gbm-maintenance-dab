@@ -11,7 +11,7 @@ class ErreurReseau extends Error {}
 class ErreurRejet extends Error {}
 
 const sansSync = <T extends object>(o: T) => {
-  const { sync: _s, supprimee: _x, donnees: _d, type: _t, televersee: _v, ...reste } = o as Record<string, unknown>;
+  const { sync: _s, supprimee: _x, donnees: _d, type: _t, televersee: _v, rejet: _r, ...reste } = o as Record<string, unknown>;
   return reste;
 };
 const empreinte = (o: unknown) => JSON.stringify(o, (_k, v) => (v instanceof ArrayBuffer ? `octets:${v.byteLength}` : v));
@@ -70,22 +70,23 @@ async function executer(client: SupabaseClient): Promise<Bilan> {
 
   try {
     await recupererStatuts(client);
+    await reessayerRefus();
 
     for (const d of await db.dab.where('sync').equals('a_envoyer').toArray() as Dab[]) await chaque('dab', d.id, async () => {
-      const r = await client.from('dab').insert([sansSync(d)]);
-      if (r.error?.code === '23505') {
-        // déjà présent sur le serveur (même code) : on rattache les fiches au DAB du serveur
-        const { data } = await client.from('dab').select('id').eq('code', d.code);
+      let r: Res = await client.from('dab').insert([sansSync(d)]);
+      let code = d.code;
+      // Code déjà pris par un AUTRE DAB du serveur : on prend le numéro suivant plutôt que de fusionner deux machines.
+      for (let essai = 0; r.error?.code === '23505' && essai < 20; essai++) {
+        const { data } = await client.from('dab').select('id').eq('code', code);
         const idServeur = (data as { id: string }[] | null)?.[0]?.id;
-        if (idServeur && idServeur !== d.id) {
-          await db.transaction('rw', db.dab, db.fiches, async () => {
-            await db.fiches.where('dab_id').equals(d.id).modify({ dab_id: idServeur, sync: 'a_envoyer' });
-            await db.dab.delete(d.id);
-            await db.dab.put({ ...d, id: idServeur, sync: 'envoye' });
-          });
-          envoyes++;
-          return;
-        }
+        if (!idServeur || idServeur === d.id) { r = { error: null }; break; } // déjà envoyé lors d'un essai précédent
+        code = codeSuivant(code);
+        r = await client.from('dab').insert([{ ...sansSync(d), code }]);
+      }
+      if (code !== d.code && !r.error) {
+        await db.dab.update(d.id, { code, sync: 'envoye' });
+        envoyes++;
+        return;
       } else if (r.error) await appel(async () => r);
       await marquer('dab', d.id, d);
     });
@@ -160,3 +161,16 @@ async function compter(etat: 'a_envoyer' | 'rejete'): Promise<number> {
 }
 export const restants = () => compter('a_envoyer');
 export const rejetes = () => compter('rejete');
+
+/** BANQUE-VILLE-AGENCE-3 → BANQUE-VILLE-AGENCE-4 ; un code sans numéro final reçoit « -2 ». */
+export function codeSuivant(code: string): string {
+  const m = code.match(/^(.*)-(\d+)$/);
+  return m ? `${m[1]}-${Number(m[2]) + 1}` : `${code}-2`;
+}
+
+/** Les refus sont retentés à chaque envoi (une correction côté serveur ou tablette peut les débloquer), sauf ceux d'une fiche validée. */
+async function reessayerRefus() {
+  for (const t of [db.dab, db.fiches, db.reponses, db.etats, db.pieces, db.photos] as unknown as (typeof db.photos)[])
+    await t.where('sync').equals('rejete').filter((x) => (x as { rejet?: string }).rejet !== 'Fiche déjà validée')
+      .modify({ sync: 'a_envoyer' });
+}

@@ -76,3 +76,9 @@ test('saisies rapides sur deux champs d\'une même partie : aucune ne s\'efface 
   expect(f?.systeme).toMatchObject({ logiciel_version: '3.3.1', espace_disque_go: '42' });
   expect(f?.cloture).toMatchObject({ gestionnaire_nom: 'G', tension_phase_neutre: '228' });
 });
+
+test('un modèle « À vérifier » dans la base n’est pas recopié : le consultant doit le relever', async () => {
+  await db.dab.put({ id: 'd2', code: 'Y', site_id: null, marque: null, modele: 'À vérifier', numero_serie: null, ville: 'Mossaka', origine: 'nouveau_a_verifier' } as never);
+  const id = await creerFiche('d2', 'c1', arrivee);
+  expect((await db.fiches.get(id))?.identification.modele).toBe('');
+});

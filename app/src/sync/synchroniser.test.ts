@@ -152,14 +152,38 @@ test('renvoi de l\'admin pendant une modification locale : le renvoi n\'est pas 
   expect(cl.lignes.reponses_checklist.size).toBe(1); // les réponses partent quand même
 });
 
-test('nouveau DAB dont le code existe déjà sur le serveur : la fiche est rattachée au DAB du serveur', async () => {
-  await db.dab.put({ id: 'local', code: 'BGFI-07', site_id: null, marque: 'Wincor', modele: 'P', numero_serie: null, ville: 'Brazzaville',
+test('nouveau DAB dont le code est déjà pris par un autre DAB du serveur : numéro suivant, jamais de fusion silencieuse', async () => {
+  await db.dab.put({ id: 'local', code: 'BGFI-BZV-CENTRE-1', site_id: null, marque: 'Wincor', modele: 'P', numero_serie: null, ville: 'Brazzaville',
     origine: 'nouveau_a_verifier', cree_par: 'c1', sync: 'a_envoyer' });
   await jeu(0); await db.fiches.update('f1', { dab_id: 'local' });
-  const cl = c(); cl.lignes.dab = new Map([['serveur', { id: 'serveur', code: 'BGFI-07' }]]);
+  const cl = c(); cl.lignes.dab = new Map([['serveur', { id: 'serveur', code: 'BGFI-BZV-CENTRE-1' }]]);
   const r = await synchroniser(cl as never);
   expect(r).toMatchObject({ restants: 0, rejetes: 0 });
-  expect((cl.lignes.fiches.get('f1') as { dab_id: string }).dab_id).toBe('serveur');
-  expect((await db.fiches.get('f1'))?.dab_id).toBe('serveur');
-  expect(await db.dab.get('local')).toBeUndefined();
+  expect((cl.lignes.dab.get('local') as { code: string }).code).toBe('BGFI-BZV-CENTRE-2');
+  expect((cl.lignes.fiches.get('f1') as { dab_id: string }).dab_id).toBe('local');
+  expect((await db.dab.get('local'))?.code).toBe('BGFI-BZV-CENTRE-2');
+});
+
+test('un refus corrigé repart : le motif du refus local n’est jamais envoyé au serveur', async () => {
+  await jeu(0); await db.fiches.update('f1', { sync: 'a_envoyer', rejet: 'ancien refus' } as never);
+  const cl = c(); let envoye: Record<string, unknown> | undefined;
+  cl.pannes.push((op, t) => { if (op === 'upsert' && t === 'fiches') envoye = undefined; return null; });
+  await synchroniser(cl as never);
+  envoye = cl.lignes.fiches.get('f1');
+  expect(envoye).toBeDefined();
+  expect('rejet' in envoye!).toBe(false);
+  expect((await db.fiches.get('f1'))?.sync).toBe('envoye');
+});
+
+test('les refus sont réessayés à l’envoi suivant (sauf ceux d’une fiche déjà validée)', async () => {
+  await jeu(2); const cl = c(); let refuser = true;
+  cl.pannes.push((op, cible) => (refuser && op === 'upload' && cible.endsWith('p1.jpg')
+    ? { error: { message: 'refus', code: '42501' }, status: 403 } : null));
+  expect((await synchroniser(cl as never)).rejetes).toBe(1);
+  await db.reponses.put({ fiche_id: 'f9', item_id: 'A', valeur: 'OK', sync: 'rejete', rejet: 'Fiche déjà validée' });
+  refuser = false;
+  const r = await synchroniser(cl as never);
+  expect(r.rejetes).toBe(1); // seul l’élément de la fiche validée reste de côté
+  expect((await db.photos.get('p1'))?.sync).toBe('envoye');
+  expect(cl.objets.has('fiches/f1/p1.jpg')).toBe(true);
 });

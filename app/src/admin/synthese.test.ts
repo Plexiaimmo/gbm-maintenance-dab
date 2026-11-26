@@ -69,6 +69,40 @@ describe('synthèse des fiches rendues', () => {
     expect(s.modules[1].absent.map((x) => x.code)).toEqual(['DAB-C']);
   });
   it("supporte l'absence de toute fiche", () => {
-    expect(synthese({ fiches: [], reponses: [], etats: [], pieces: [], articles: [] })).toEqual({ nbFiches: 0, pieces: [], pasOk: [], modules: [] });
+    expect(synthese({ fiches: [], reponses: [], etats: [], pieces: [], articles: [] })).toEqual({ nbFiches: 0, ecarts: [], pieces: [], pasOk: [], modules: [] });
+  });
+});
+
+describe('écarts avec la base : tout ce que le terrain contredit ou ajoute', () => {
+  const base = (id: string, dab: string, identification: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
+    ({ ...f(id, dab, 'terminee', '2026-12-02T08:00:00Z'), identification, sn_base: 'SN-BASE', modele_base: 'ProCash 2050xe', ...extra });
+  const d = (fiches: ReturnType<typeof base>[], reponses: ExportDonnees['reponses'] = []): ExportDonnees =>
+    ({ fiches, reponses, etats: [], pieces: [], articles: [], items: [{ id: 'CHK-9', libelle: 'Dépôt', obligatoire: true }] });
+
+  it('ne signale rien quand le relevé confirme la base', () => {
+    expect(synthese(d([base('a', 'DAB-1', { numero_serie: 'SN-BASE', modele: 'ProCash 2050xe' })])).ecarts).toEqual([]);
+  });
+  it('liste les corrections, le n° de série et le modèle différents, la ville, et marque les nouveaux DAB', () => {
+    const e = synthese(d([
+      base('a', 'DAB-1', { numero_serie: 'SN-NEUF', modele: 'ProCash 280', ville: 'Dolisie', banque: 'LCB', corrections: 'DAB mural' }),
+      base('b', 'LCB-DLS-CENTRE-1', { numero_serie: 'SN-X', modele: 'ProCash 280' }, { nouveau: true, sn_base: null, modele_base: null }),
+    ])).ecarts;
+    expect(e.map((x) => x.dab.code)).toEqual(['LCB-DLS-CENTRE-1', 'DAB-1']);
+    expect(e[0].lignes).toEqual(['Nouveau DAB ajouté sur le terrain']);
+    expect(e[1].lignes).toEqual(['N° de série : SN-BASE → SN-NEUF', 'Modèle : ProCash 2050xe → ProCash 280', 'Ville : Dolisie', 'Banque : LCB', 'Remarque : DAB mural']);
+  });
+  it('signale un n° de série déjà relevé sur un autre DAB (doublon probable) en tête', () => {
+    const e = synthese(d([
+      base('a', 'DAB-1', { numero_serie: 'SN-BASE', modele: 'ProCash 2050xe' }),
+      base('b', 'BGFI-BZV-X-1', { numero_serie: 'sn-base', modele: 'ProCash 2050xe' }, { nouveau: true, sn_base: null }),
+    ])).ecarts;
+    expect(e[0].dab.code).toBe('BGFI-BZV-X-1');
+    expect(e[0].lignes).toContain('Même n° de série que DAB-1 : doublon probable');
+    expect(e[0].doublon).toBe(true);
+  });
+  it('liste les exceptions acceptées sur le terrain', () => {
+    const e = synthese(d([base('a', 'DAB-1', { numero_serie: 'SN-BASE', modele: 'ProCash 2050xe', plaque_illisible: true })],
+      [{ fiche_id: 'a', item_id: 'CHK-9', libelle: 'Dépôt', valeur: 'NA', commentaire: 'pas de module' }])).ecarts;
+    expect(e[0].lignes).toEqual(['Plaque illisible', 'N/A sur point obligatoire : Dépôt (pas de module)']);
   });
 });

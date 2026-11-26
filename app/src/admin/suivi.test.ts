@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest';
+import { MOTIF_ERREUR } from '../domaine/completude';
 import { resumerSuivi } from './suivi';
 
 const dab = (id: string, ville = 'Brazzaville') => ({ id, code: id.toUpperCase(), ville, site_id: null, banque: 'BGFI', agence: 'A' });
@@ -17,4 +18,17 @@ test('compteurs et dernière fiche par DAB', () => {
   expect(d1.fiche?.id).toBe('f2');
   expect(d1.signal?.raisons).toEqual(['GPS absent']);
   expect(r.lignes.find((l) => l.dab.id === 'd4')!.fiche).toBeUndefined();
+});
+
+test('une fiche ouverte par erreur ne compte pas comme visite, et ne masque pas la vraie visite', () => {
+  const dabs = [{ id: 'd1', code: 'A', ville: null, site_id: null, banque: '', agence: '' }, { id: 'd2', code: 'B', ville: null, site_id: null, banque: '', agence: '' }];
+  const erreur = { identification: { visite_impossible: MOTIF_ERREUR } };
+  const r = resumerSuivi(dabs, [
+    { id: 'x', dab_id: 'd1', statut: 'terminee', arrivee_at: '2026-12-01T10:00:00Z', ...erreur },
+    { id: 'v', dab_id: 'd1', statut: 'terminee', arrivee_at: '2026-12-01T08:00:00Z', identification: {} },
+    { id: 'y', dab_id: 'd2', statut: 'terminee', arrivee_at: '2026-12-01T09:00:00Z', ...erreur },
+  ], []);
+  expect(r.lignes[0].fiche?.id).toBe('v');
+  expect(r.compteurs.visites).toBe(1);
+  expect(r.compteurs.restants).toBe(1);
 });

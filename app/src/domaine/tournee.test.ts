@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import { avancementTournee, recapitulatif, statutDab } from './tournee';
+import { MOTIF_ERREUR } from './completude';
 import type { ChecklistItem, Dab, Fiche, FicheComplete } from './types';
 
 const dab = (id: string): Dab => ({ id, code: id, site_id: null, marque: null, modele: null, numero_serie: null, ville: null, origine: 'reference' });
@@ -43,4 +44,10 @@ test('ordre de la liste : en cours et à reprendre d\'abord, puis à visiter par
     l('D3', 'Zz', 'renvoyee'), l('D4', 'Aa', 'brouillon'), l('D6', 'Bacongo', 'validee')]);
   expect(r.aTraiter.map((x) => x.code)).toEqual(['D3', 'D4', 'D2', 'D1']);
   expect(r.releves.map((x) => x.code)).toEqual(['D6', 'D5']);
+});
+
+test('une fiche ouverte par erreur puis terminée ne compte pas : le DAB redevient à visiter', () => {
+  const f = [{ dab_id: 'd1', statut: 'terminee' as const, arrivee_at: '2026-12-01T09:00:00Z', identification: { visite_impossible: MOTIF_ERREUR } }];
+  expect(statutDab('d1', f)).toBe('a_visiter');
+  expect(statutDab('d1', [...f, { dab_id: 'd1', statut: 'brouillon' as const, arrivee_at: '2026-12-01T08:00:00Z', identification: {} }])).toBe('brouillon');
 });

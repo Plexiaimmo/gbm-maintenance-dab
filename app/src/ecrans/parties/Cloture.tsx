@@ -2,7 +2,7 @@ import type { Fiche } from '../../domaine/types';
 import { majPartie } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { Signature } from '../../composants/Signature';
-import { Champ, Choix, ChoixOuAutre } from './Commun';
+import { Champ, Choix, ChoixOuAutre, Exception } from './Commun';
 import type { recapitulatif } from '../../domaine/tournee';
 
 export function Cloture({ fiche, recap }: { fiche: Fiche; recap: ReturnType<typeof recapitulatif> }) {
@@ -11,7 +11,10 @@ export function Cloture({ fiche, recap }: { fiche: Fiche; recap: ReturnType<type
   return (
     <section>
       <h2>Ticket test</h2>
-      <BoutonPhoto ficheId={fiche.id} cible="ticket" libelle="Photographier le ticket test" />
+      {!c.ticket_impossible && <BoutonPhoto ficheId={fiche.id} cible="ticket" libelle="Photographier le ticket test" />}
+      <Exception libelle="Pas de ticket possible" actif={!!c.ticket_impossible} basculer={(v) => maj({ ticket_impossible: v })}
+        motif={c.motif_ticket} enregistrerMotif={(v) => maj({ motif_ticket: v })}
+        motifs={['Imprimante en panne', 'Plus de papier', 'DAB hors service', 'Pas d’accès au mode test']} />
       <h2>Gestionnaire de l'agence</h2>
       <Choix<boolean> options={[[false, 'Présent, il signe'], [true, 'Absent ou refus']]} valeur={!!c.gestionnaire_absent}
         choisir={(v) => maj({ gestionnaire_absent: v })} />

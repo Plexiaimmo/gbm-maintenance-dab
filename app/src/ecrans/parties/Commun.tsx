@@ -107,3 +107,16 @@ export function ChoixMultiple({ libelle, options, valeur, enregistrer, aide }: {
     </div>
   );
 }
+
+/** Sortie de la règle (plaque illisible, système inaccessible…) : jamais bloquant, mais toujours avec un motif. */
+export function Exception({ libelle, actif, basculer, motifs, motif, enregistrerMotif }: {
+  libelle: string; actif: boolean; basculer: (v: boolean) => void; motifs?: string[]; motif?: string; enregistrerMotif?: (v: string) => void;
+}) {
+  return (
+    <div className={actif ? 'exception actif' : 'exception'}>
+      <button type="button" className={actif ? 'pastille-choix attention actif' : 'pastille-choix'} aria-pressed={actif}
+        onClick={() => { vibrer(); basculer(!actif); }}>{libelle}</button>
+      {actif && motifs && enregistrerMotif && <ChoixOuAutre libelle="Pourquoi ?" options={motifs} valeur={motif} enregistrer={enregistrerMotif} />}
+    </div>
+  );
+}

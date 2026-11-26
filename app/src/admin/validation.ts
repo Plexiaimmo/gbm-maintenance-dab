@@ -1,6 +1,7 @@
 export type ResultatValidation = { appliquees: string[]; non_appliquees: string[] };
 
-const NOMS: Record<string, string> = { code_banque: 'code de la banque', banque: 'banque', agence: 'agence' };
+const NOMS: Record<string, string> = { code_banque: 'code de la banque', banque: 'banque', agence: 'agence', ville: 'ville',
+  banque_creee: 'nouvelle banque ajoutée à la base' };
 
 /** Ce que la validation a changé sur le DAB, et ce qu'il reste à faire à la main. */
 export function resumerValidation(r: ResultatValidation | null | undefined): { appliquees: string; nonAppliquees: string[] } {

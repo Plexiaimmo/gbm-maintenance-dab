@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { elementsManquants, sansSignature } from './completude';
+import { derogations, elementsManquants, MOTIF_ERREUR, sansSignature } from './completude';
 import { MODULES, type ChecklistItem, type FicheComplete } from './types';
 
 const item = (id: string, o: Partial<ChecklistItem> = {}): ChecklistItem => ({
@@ -47,7 +47,9 @@ test('partie 2 : réponses', () => {
   const g = complete(); g.reponses = g.reponses.filter((r) => r.item_id !== 'B');
   expect(cles(g)).toEqual(['2:item:B']); // même facultatif, jamais à vide
   const h = complete(); h.reponses[0].valeur = 'NA';
-  expect(cles(h)).toEqual(['2:item:A']);
+  expect(cles(h)).toEqual(['2:na:A']); // N/A possible sur un point obligatoire, mais expliqué
+  h.reponses[0].commentaire = 'Pas de module de dépôt sur ce DAB';
+  expect(cles(h)).toEqual([]);
   const i = complete(); i.reponses[0].valeur = 'NOK';
   expect(cles(i)).toEqual(['2:commentaire:A', '2:photo:A']);
   const j = complete(); j.photos = j.photos.filter((p) => p.cible !== 'item:CHK-P127');
@@ -92,4 +94,57 @@ test('partie 5 : clôture et signature', () => {
   expect(cles(h)).toEqual([]);
   expect(sansSignature(h)).toBe(true);
   expect(sansSignature(complete())).toBe(false);
+});
+
+test('plaque illisible : le n° de série n’est plus exigé, la photo reste', () => {
+  const f = complete(); f.fiche.identification.numero_serie = ''; f.fiche.identification.plaque_illisible = true;
+  expect(cles(f)).toEqual([]);
+  f.photos = f.photos.filter((p) => p.cible !== 'plaque');
+  expect(cles(f)).toEqual(['1:plaque']);
+});
+
+test('système inaccessible : motif exigé, puis seules les questions visibles restent (anti-skimming)', () => {
+  const f = complete(); f.fiche.systeme = { acces_impossible: true, antiskimming: false };
+  f.photos = f.photos.filter((p) => p.cible !== 'journal');
+  expect(cles(f)).toEqual(['4:motif_systeme']);
+  f.fiche.systeme.motif_acces = 'Pas de mot de passe';
+  expect(cles(f)).toEqual([]);
+  delete f.fiche.systeme.antiskimming;
+  expect(cles(f)).toEqual(['4:antiskimming']);
+});
+
+test('pas de ticket test : motif exigé à la place de la photo', () => {
+  const f = complete(); f.photos = f.photos.filter((p) => p.cible !== 'ticket'); f.fiche.cloture.ticket_impossible = true;
+  expect(cles(f)).toEqual(['5:motif_ticket']);
+  f.fiche.cloture.motif_ticket = 'Imprimante en panne';
+  expect(cles(f)).toEqual([]);
+});
+
+test('visite impossible : seuls le motif et une photo du site sont exigés', () => {
+  const f = complete();
+  f.fiche.identification = {}; f.fiche.systeme = {}; f.fiche.cloture = {}; f.reponses = []; f.etats = []; f.photos = []; f.signature = false;
+  f.fiche.identification.visite_impossible = 'DAB retiré';
+  expect(cles(f)).toEqual(['1:photo_visite_impossible']);
+  f.photos = [{ cible: 'visite_impossible' }];
+  expect(cles(f)).toEqual([]);
+  f.fiche.identification.visite_impossible = '  ';
+  expect(cles(f).length).toBeGreaterThan(5); // motif vide = fiche normale
+});
+
+test('dérogations listées pour l’administrateur', () => {
+  const f = complete();
+  expect(derogations(f, ITEMS)).toEqual([]);
+  f.fiche.identification.plaque_illisible = true;
+  f.fiche.systeme.acces_impossible = true; f.fiche.systeme.motif_acces = 'Pas de mot de passe';
+  f.fiche.cloture.ticket_impossible = true; f.fiche.cloture.motif_ticket = 'Imprimante en panne';
+  f.reponses[0].valeur = 'NA'; f.reponses[0].commentaire = 'pas de module';
+  expect(derogations(f, ITEMS)).toEqual(['Plaque illisible', 'Système inaccessible : Pas de mot de passe',
+    'Pas de ticket test : Imprimante en panne', 'N/A sur point obligatoire : A (pas de module)']);
+  const g = complete(); g.fiche.identification.visite_impossible = 'Accès refusé par l’agence';
+  expect(derogations(g, ITEMS)).toEqual(['Visite impossible : Accès refusé par l’agence']);
+});
+
+test('fiche ouverte par erreur : terminable sans photo', () => {
+  const f = complete(); f.photos = []; f.reponses = []; f.fiche.identification = { visite_impossible: MOTIF_ERREUR };
+  expect(cles(f)).toEqual([]);
 });

@@ -3,7 +3,7 @@ import { MODULES } from '../../domaine/types';
 import { majPartie } from '../../local/fiches';
 import { BoutonPhoto } from '../../composants/BoutonPhoto';
 import { vibrer } from '../../lib/tactile';
-import { Champ, ChoixOuAutre, OuiNon } from './Commun';
+import { Champ, ChoixOuAutre, Exception, OuiNon } from './Commun';
 
 const WINDOWS = ['Windows 7', 'Windows 10', 'Windows 10 IoT LTSC', 'Windows 11 IoT'];
 const LOGICIELS = ['ProTopas', 'ProCash/NDC', 'ProCash/DDC', 'ProFlex4'];
@@ -35,6 +35,10 @@ export function Systeme({ fiche }: { fiche: Fiche }) {
   const maj = (p: Partial<Fiche['systeme']>) => majPartie(fiche.id, 'systeme', p);
   return (
     <section>
+      <Exception libelle="Je ne peux pas accéder au système" actif={!!s.acces_impossible} basculer={(v) => maj({ acces_impossible: v })}
+        motif={s.motif_acces} enregistrerMotif={(v) => maj({ motif_acces: v })}
+        motifs={['Pas de mot de passe', 'DAB éteint ou ne démarre pas', 'Refus de la banque', 'Écran ou clavier opérateur en panne']} />
+      {!s.acces_impossible && <>
       <ChoixOuAutre libelle="Version de Windows" options={WINDOWS} valeur={s.version_windows} enregistrer={(v) => maj({ version_windows: v })} />
       <ChoixOuAutre libelle="Logiciel applicatif" options={LOGICIELS} valeur={s.logiciel} enregistrer={(v) => maj({ logiciel: v })} />
       <Champ libelle="Version du logiciel" clavier="nombre" valeur={s.logiciel_version} enregistrer={(v) => maj({ logiciel_version: v })} />
@@ -43,6 +47,7 @@ export function Systeme({ fiche }: { fiche: Fiche }) {
       <h2>Journal d'erreurs</h2>
       <BoutonPhoto ficheId={fiche.id} cible="journal" libelle="Photographier l'écran du journal" />
       <TestInterne valeur={s.test_interne} enregistrer={(v) => maj({ test_interne: v })} />
+      </>}
       <OuiNon libelle="Dispositif anti-skimming présent ?" valeur={s.antiskimming} enregistrer={(v) => maj({ antiskimming: v })} />
       {s.antiskimming && <BoutonPhoto ficheId={fiche.id} cible="antiskimming" libelle="Photographier le dispositif" />}
     </section>

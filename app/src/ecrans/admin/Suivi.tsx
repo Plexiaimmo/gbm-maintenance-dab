@@ -1,3 +1,4 @@
+import { villesConnues } from '../../domaine/codeDab';
 import { useEffect, useMemo, useState } from 'react';
 import { chargerSuivi } from '../../admin/donnees';
 import { resumerSuivi, type LigneSuivi } from '../../admin/suivi';
@@ -21,6 +22,7 @@ export function Suivi({ ouvrir, exporter, synthese }: { ouvrir: (ficheId: string
     && (!filtres.statut || (filtres.statut === 'douteux' ? l.signal?.douteux : statutDe(l) === filtres.statut)))
     .sort((a, b) => a.dab.code.localeCompare(b.dab.code));
   const banques = [...new Set(r.lignes.map((l) => l.dab.banque))].filter(Boolean).sort();
+  const villes = villesConnues(r.lignes.map((l) => l.dab.ville));
   const c = r.compteurs;
 
   return (
@@ -35,7 +37,7 @@ export function Suivi({ ouvrir, exporter, synthese }: { ouvrir: (ficheId: string
       </div>
       <div className="ligne filtres">
         <select value={filtres.banque} onChange={(e) => setFiltres({ ...filtres, banque: e.target.value })}><option value="">Toutes les banques</option>{banques.map((b) => <option key={b}>{b}</option>)}</select>
-        <select value={filtres.ville} onChange={(e) => setFiltres({ ...filtres, ville: e.target.value })}><option value="">Toutes les villes</option><option>Brazzaville</option><option>Pointe-Noire</option></select>
+        <select value={filtres.ville} onChange={(e) => setFiltres({ ...filtres, ville: e.target.value })}><option value="">Toutes les villes</option>{villes.map((v) => <option key={v}>{v}</option>)}</select>
         <select value={filtres.statut} onChange={(e) => setFiltres({ ...filtres, statut: e.target.value })}>
           <option value="">Tous les statuts</option><option value="non_visite">Non visité</option><option value="brouillon">En cours</option>
           <option value="terminee">À valider</option><option value="validee">Validée</option><option value="renvoyee">Renvoyée</option><option value="douteux">⚠ Douteux</option>

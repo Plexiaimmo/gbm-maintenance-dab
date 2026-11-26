@@ -8,6 +8,7 @@ const FIXES: Record<string, [string, number]> = {
   ticket: ['Ticket test', 4_000_000],
   signature: ['Signature du gestionnaire', 4_000_001],
   site_absent: ['Site (gestionnaire absent)', 4_000_002],
+  visite_impossible: ['Site (relevé impossible)', -1],
 };
 
 /** Les photos d'une fiche, légendées et rangées dans l'ordre de la fiche (celles sans lien d'accès sont ignorées). */

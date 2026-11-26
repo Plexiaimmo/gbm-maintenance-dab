@@ -1,4 +1,6 @@
-import type { ExportDonnees } from './export';
+import { CORRECTIONS, type ExportDonnees } from './export';
+import { derogations } from '../domaine/completude';
+import type { FicheComplete } from '../domaine/types';
 
 export interface DabRef { code: string; ficheId: string }
 export interface Synthese {
@@ -6,6 +8,8 @@ export interface Synthese {
   pieces: { cle: string; pn: string | null; designation: string; quantite: number; dabs: DabRef[] }[];
   pasOk: { itemId: string; libelle: string; dabs: DabRef[] }[];
   modules: { module: string; use: DabRef[]; aRemplacer: DabRef[]; absent: DabRef[] }[];
+  /** Par DAB : ce que le terrain contredit ou ajoute à la base, et les exceptions acceptées. */
+  ecarts: { dab: DabRef; lignes: string[]; nouveau: boolean; doublon: boolean }[];
 }
 
 const RENDUES = ['terminee', 'validee'];
@@ -47,10 +51,35 @@ export function synthese(d: ExportDonnees): Synthese {
     modules.set(e.module, m);
   }
 
+  const sn = (v: unknown) => String(v ?? '').replace(/\s/g, '').toUpperCase();
+  const pareil = (a: unknown, b: unknown) => String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+  const ecarts: Synthese['ecarts'] = [];
+  for (const f of fiches.values()) {
+    const id = f.identification as Record<string, unknown>;
+    const lignes: string[] = [];
+    const releve = sn(id.numero_serie);
+    const autre = releve ? (d.dabsBase ?? []).find((x) => x.code !== f.dab_code && sn(x.numero_serie) === releve)?.code
+      ?? [...fiches.values()].find((g) => g.dab_code !== f.dab_code && (sn(g.identification.numero_serie) === releve || sn(g.sn_base) === releve))?.dab_code : undefined;
+    if (autre) lignes.push(`Même n° de série que ${autre} : doublon probable`);
+    if (f.nouveau) lignes.push('Nouveau DAB ajouté sur le terrain');
+    else {
+      if (releve && releve !== sn(f.sn_base)) lignes.push(`N° de série : ${f.sn_base || '(vide)'} → ${releve}`);
+      if (String(id.modele ?? '').trim() && !pareil(id.modele, f.modele_base)) lignes.push(`Modèle : ${f.modele_base || '(vide)'} → ${String(id.modele).trim()}`);
+      for (const [k, l] of CORRECTIONS) if (String(id[k] ?? '').trim()) lignes.push(`${l} : ${String(id[k]).trim()}`);
+    }
+    if (String(id.corrections ?? '').trim()) lignes.push(`Remarque : ${String(id.corrections).trim()}`);
+    const items = (d.items ?? []).map((i) => ({ ...i, ordre: 0, module: '', consigne: '', modele: 'Tous', photo_requise: false, commentaire_requis: false, actif: true }));
+    const reps = d.reponses.filter((r) => r.fiche_id === f.id).map((r) => ({ ...r, commentaire: r.commentaire ?? undefined }));
+    lignes.push(...derogations({ fiche: f, reponses: reps } as unknown as FicheComplete, items));
+    if (lignes.length) ecarts.push({ dab: ref(f.id), lignes, nouveau: !!f.nouveau, doublon: !!autre });
+  }
+  ecarts.sort((a, b) => Number(b.doublon) - Number(a.doublon) || Number(b.nouveau) - Number(a.nouveau) || parCode(a.dab, b.dab));
+
   const trierDabs = <T extends { dabs: DabRef[] }>(l: T[]) => { l.forEach((x) => x.dabs.sort(parCode)); return l; };
   const abime = (m: Synthese['modules'][number]) => m.use.length + m.aRemplacer.length;
   return {
     nbFiches: fiches.size,
+    ecarts,
     pieces: trierDabs([...pieces.values()]).sort((a, b) => b.quantite - a.quantite || a.designation.localeCompare(b.designation, 'fr')),
     pasOk: trierDabs([...pasOk.values()]).sort((a, b) => b.dabs.length - a.dabs.length || a.libelle.localeCompare(b.libelle, 'fr')),
     modules: [...modules.values()].map((m) => ({ ...m, use: m.use.sort(parCode), aRemplacer: m.aRemplacer.sort(parCode), absent: m.absent.sort(parCode) }))

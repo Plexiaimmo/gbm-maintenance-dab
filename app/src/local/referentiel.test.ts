@@ -34,3 +34,17 @@ test('plus de 1000 articles : tous chargés', async () => {
   await chargerReferentiel(gros as never);
   expect(await db.articles.count()).toBe(1500);
 });
+
+test('un DAB ajouté sur la tablette et refusé par le serveur reste sur la tablette', async () => {
+  await db.dab.put({ id: 'local', code: 'X-BZV-Y-1', sync: 'rejete' } as never);
+  await chargerReferentiel(client as never);
+  expect(await db.dab.get('local')).toBeDefined();
+});
+
+test('une liste de DAB vide (compte mal configuré) ne vide jamais la tablette', async () => {
+  await chargerReferentiel(client as never);
+  const vide = { from: (t: string) => ({ select: () => ({ range: async (de: number, a: number) => ({ data: t === 'dab' || t === 'checklist_items' ? [] : tables[t].slice(de, a + 1), error: null }) }) }) };
+  await expect(chargerReferentiel(vide as never)).rejects.toThrow(/aucun DAB/i);
+  expect(await db.dab.count()).toBe(3);
+  expect(await db.checklist.count()).toBe(1);
+});

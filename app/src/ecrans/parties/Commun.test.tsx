@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach } from 'vitest';
-import { ChoixMultiple, ChoixOuAutre } from './Commun';
+import { ChoixMultiple, ChoixOuAutre, Exception } from './Commun';
 
 afterEach(cleanup);
 const OPT = ['Windows 10', 'Windows 11'];
@@ -57,5 +57,20 @@ describe('ChoixMultiple : plusieurs choix à toucher', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Autre' }));
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'vis' } });
     expect(enregistrer).toHaveBeenLastCalledWith('Courroie, vis');
+  });
+});
+
+describe('Exception : sortir de la règle sans être bloqué, mais avec un motif', () => {
+  it('fermée, elle ne montre que le bouton ; ouverte, elle demande pourquoi', () => {
+    const basculer = vi.fn();
+    const { rerender } = render(<Exception libelle="Plaque illisible" actif={false} basculer={basculer} />);
+    expect(screen.queryByText('Pourquoi ?')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Plaque illisible' }));
+    expect(basculer).toHaveBeenCalledWith(true);
+    const motif = vi.fn();
+    rerender(<Exception libelle="Plaque illisible" actif basculer={basculer} motifs={['Plaque absente']} enregistrerMotif={motif} />);
+    expect(screen.getByRole('button', { name: 'Plaque illisible' }).getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Plaque absente' }));
+    expect(motif).toHaveBeenLastCalledWith('Plaque absente');
   });
 });

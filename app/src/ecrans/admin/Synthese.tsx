@@ -14,13 +14,25 @@ export function Synthese({ ouvrir, retour }: { ouvrir: (ficheId: string) => void
   useEffect(() => { void charger(); }, []);
   if (erreur) return <p className="page erreur">{erreur}</p>;
   if (!s) return <p className="page">Chargement…</p>;
-  const rien = !s.pieces.length && !s.pasOk.length && !s.modules.length;
+  const rien = !s.ecarts.length && !s.pieces.length && !s.pasOk.length && !s.modules.length;
 
   return (
     <div className="page large synthese">
       <div className="entete"><button className="petit" onClick={retour}>← Suivi</button><h1>À signaler</h1><button className="petit" onClick={charger}>Actualiser</button></div>
       <p className="consigne">Dernière fiche rendue (à valider ou validée) de chaque DAB : {s.nbFiches} fiche{s.nbFiches > 1 ? 's' : ''}. Touchez un DAB pour ouvrir sa fiche.</p>
       {rien && <p className="aucun">Rien à signaler pour l'instant.</p>}
+
+      {s.ecarts.length > 0 && <>
+        <h2>Écarts avec la base et exceptions ({s.ecarts.length} DAB)</h2>
+        <p className="consigne">Ce que le terrain contredit, ajoute ou n'a pas pu relever. Ouvrez la fiche puis « Valider et mettre à jour le DAB » pour corriger la base.</p>
+        <div className="cartes-synthese">{s.ecarts.map((e) => (
+          <article key={e.dab.ficheId} className={e.doublon ? 'carte-synthese doublon' : 'carte-synthese'}>
+            <div className="carte-tete"><span><b>{e.dab.code}</b>{e.nouveau && <small>nouveau, à vérifier</small>}</span></div>
+            <ul className="lignes-ecart">{e.lignes.map((l) => <li key={l}>{l}</li>)}</ul>
+            <Puces dabs={[{ ...e.dab, code: 'Ouvrir la fiche' }]} ouvrir={ouvrir} />
+          </article>
+        ))}</div>
+      </>}
 
       {s.pieces.length > 0 && <>
         <h2>Pièces à prévoir</h2>

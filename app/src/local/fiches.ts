@@ -18,7 +18,7 @@ export async function creerFiche(dabId: string, consultantId: string, a: Arrivee
     id, dab_id: dabId, consultant_id: consultantId, statut: 'brouillon',
     arrivee_at: a.at, arrivee_lat: a.lat ?? null, arrivee_lng: a.lng ?? null, arrivee_precision: a.precision ?? null,
     arrivee_gps_at: a.gps_at ?? null, gps_motif: a.gps_motif ?? null,
-    identification: { modele: dab?.modele ?? '', numero_serie: dab?.numero_serie ?? '' },
+    identification: { modele: /vérifier/i.test(dab?.modele ?? '') ? '' : (dab?.modele ?? ''), numero_serie: dab?.numero_serie ?? '' },
     systeme: {}, cloture: {}, sans_signature: false, sync: 'a_envoyer',
   });
   return id;
